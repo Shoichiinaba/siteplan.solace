@@ -61,21 +61,30 @@ class Client extends CI_Controller
         $nama = $this->input->post('nama');
         $email = $this->input->post('email');
         $telepon = $this->input->post('telepon');
+        $domisili = $this->input->post('domisili');
         $perum =  $this->input->post('perum');
         $id_perum =  $this->input->post('id_perum');
 
+        // Buat tanggal dan jam hari ini
+        date_default_timezone_set("Asia/Jakarta");
+        $tanggal_hari_ini = date("Y-m-d");
+        $jam_hari_ini     = date("H:i:s");
+
         // Simpan data ke dalam sesion
-        $data = array(
+         $data = array(
             'id_customer' => $id_customer,
-            'nama' => $nama,
-            'email' => $email,
-            'telepon' => $telepon,
-            'id_perum' => $id_perum
+            'nama'        => $nama,
+            'email'       => $email,
+            'domisili'    => $domisili,
+            'telepon'     => $telepon,
+            'id_perum'    => $id_perum,
+            'tanggal'     => $tanggal_hari_ini,
+            'jam'         => $jam_hari_ini
         );
         $this->session->set_userdata('form_data', $data);
 
         // Simpan data ke database
-        if ($this->FormDataModel->simpanData($id_customer, $nama, $email, $telepon, $id_perum)) {
+        if ($this->FormDataModel->simpanData($id_customer, $nama, $email, $domisili, $telepon, $tanggal_hari_ini, $jam_hari_ini, $id_perum)) {
             // Data berhasil disimpan
             $this->session->set_flashdata('success_message', 'Terima Kasih Data anda sudah berhasil disimpan.');
         } else {

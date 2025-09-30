@@ -32,7 +32,7 @@ class FormDataModel extends CI_Model
         return $query->result();
     }
 
-    public function simpanData($id_customer, $nama, $email, $telepon, $id_perum)
+    public function simpanData($id_customer, $nama, $email, $domisili, $telepon, $tanggal_hari_ini, $jam_hari_ini, $id_perum)
     {
         // Periksa apakah data sudah ada dalam database
         $this->db->where('email', $email);
@@ -44,7 +44,10 @@ class FormDataModel extends CI_Model
                 'id_customer' => $id_customer,
                 'id_perum' => $id_perum,
                 'nama' => $nama,
+                'domisili' => $domisili,
                 'telepon' => $telepon,
+                'tanggal' => $tanggal_hari_ini,
+                'jam' => $jam_hari_ini,
                 'email' => $email,
                 'jml_input' => 1 // Inisialisasi hitung dengan 1
             );

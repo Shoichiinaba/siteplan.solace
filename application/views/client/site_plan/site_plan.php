@@ -230,7 +230,7 @@ svg {
                 <h6 class="mt-3"><b>Transaksi</b></h6>
                 <div class="table-responsive">
                     <table class="table table-bordered table-sm text-center align-middle">
-                        <thead class="table-success">
+                        <thead class="table-info">
                             <tr>
                                 <th>Status Transaksi</th>
                                 <th>Tgl Transaksi</th>
@@ -438,7 +438,7 @@ function load_query_map() {
                                     <td>${tr.status_trans || "-"}</td>
                                     <td>${tr.tgl_trans || "-"}</td>
                                     <td>${tr.nominal ? "Rp. " + new Intl.NumberFormat('id-ID').format(tr.nominal) : "-"}</td>
-                                    <td>${tr.nominal_dp || "-"}</td>
+                                    <td>${tr.nominal_dp ? "Rp. " + new Intl.NumberFormat('id-ID').format(tr.nominal) : "-"}</td>
                                     <td>${tr.tahap || "-"}</td>
                                 </tr>
                             `;

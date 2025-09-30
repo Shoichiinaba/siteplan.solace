@@ -1,3 +1,30 @@
+<!-- Load jQuery & Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<style>
+.select2-container {
+    width: 100% !important;
+    display: block;
+}
+
+.select2-container--default .select2-selection--single {
+    height: 38px;
+    padding: 6px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 24px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 36px;
+    right: 70px;
+}
+</style>
+
 <main class="main-content  mt-0">
     <div class="container">
         <!-- <div class="page-header min-heig-nav m-h"> -->
@@ -44,6 +71,7 @@
         </div>
     </div>
 </main>
+
 <div class="modal fade" id="modal-formulir" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -81,6 +109,9 @@
                         <input type="number" class="form-control" autocomplete="off" required=""
                             placeholder="No. telp 62" name="telepon" aria-describedby="email-addon">
                     </div>
+                    <div class="input-group mb-3">
+                        <select id="domisili" name="domisili" class="form-control w-100" required></select>
+                    </div>
                     <div class="input-group mb-3" hidden>
                         <input type="text" id="nm-perum" name="perum">
                     </div>
@@ -95,9 +126,6 @@
                     </div>
                 </form>
             </div>
-            <!-- <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="save-change-denah" data-bs-dismiss="modal">Simpan</button>
-            </div> -->
         </div>
     </div>
     <!-- Modal Attech-->
@@ -107,5 +135,44 @@ $('.cek-siteplan').click(function() {
     // alert();
     $('#nm-perum').val($(this).data('perum'))
     $('#id-perum').val($(this).data('id_perum'))
+});
+
+$(document).ready(function() {
+    // Ambil semua data provinsi dulu
+    $.getJSON("https://www.emsifa.com/api-wilayah-indonesia/api/provinces.json", function(provinces) {
+        let requests = [];
+        provinces.forEach(function(prov) {
+            let url = "https://www.emsifa.com/api-wilayah-indonesia/api/regencies/" + prov.id +
+                ".json";
+            requests.push($.getJSON(url));
+        });
+
+        // Jalankan semua request
+        $.when.apply($, requests).done(function() {
+            let allCities = [];
+
+            // Kalau hanya 1 provinsi
+            if (requests.length === 1) {
+                allCities = arguments[0];
+            } else {
+                // Kalau lebih dari 1 provinsi → gabungkan semua
+                for (let i = 0; i < arguments.length; i++) {
+                    allCities = allCities.concat(arguments[i][0]);
+                }
+            }
+
+            // Init Select2 dengan data semua kota/kabupaten
+            $('#domisili').select2({
+                placeholder: "Pilih Kota/Kabupaten",
+                dropdownParent: $('#modal-formulir'),
+                data: $.map(allCities, function(item) {
+                    return {
+                        id: item.name.toUpperCase(),
+                        text: item.name
+                    };
+                })
+            });
+        });
+    });
 });
 </script>
