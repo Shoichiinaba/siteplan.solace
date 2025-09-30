@@ -8,6 +8,35 @@
 }
 
 
+svg {
+    width: 100%;
+    height: auto;
+}
+
+#svg polygon,
+#svg rect {
+    cursor: pointer;
+    pointer-events: all !important;
+    /* pakai all saja */
+    fill-opacity: 1;
+}
+
+.mask {
+    pointer-events: none !important;
+    /* sudah oke */
+}
+
+#svg-container {
+    position: relative;
+    z-index: 1;
+    /* jangan terlalu tinggi dulu */
+}
+
+#svg {
+    position: relative;
+    z-index: 2;
+}
+
 
 .progress {
     height: 15px;
@@ -173,40 +202,46 @@
             <div class="modal-body">
                 <h6><b>Perumahan:</b> <span id="nama-perum"></span></h6>
 
-                <table class="table table-bordered table-sm text-center align-middle">
-                    <thead class="table-success">
-                        <tr>
-                            <th>Nama</th>
-                            <th>No WA</th>
-                            <th>Blok</th>
-                            <th>Type Unit</th>
-                            <th>Status Pembelian</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td id="nama-cus"></td>
-                            <td id="no-wa"></td>
-                            <td id="blok"></td>
-                            <td id="type-unit"></td>
-                            <td><span id="status-pembelian" class="badge"></span></td>
-                        </tr>
-                    </tbody>
-                </table>
+                <!-- Perumahan table -->
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm text-center align-middle">
+                        <thead class="table-success">
+                            <tr>
+                                <th>Nama</th>
+                                <th>No WA</th>
+                                <th>Blok</th>
+                                <th>Type Unit</th>
+                                <th>Status Pembelian</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td id="nama-cus"></td>
+                                <td id="no-wa"></td>
+                                <td id="blok"></td>
+                                <td id="type-unit"></td>
+                                <td><span id="status-pembelian" class="badge"></span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
+                <!-- Transaksi table -->
                 <h6 class="mt-3"><b>Transaksi</b></h6>
-                <table class="table table-bordered table-sm text-center align-middle">
-                    <thead class="table-success">
-                        <tr>
-                            <th>Status Transaksi</th>
-                            <th>Tgl Transaksi</th>
-                            <th>Nominal</th>
-                            <th>Nominal DP</th>
-                            <th>Tahap</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody-transaksi"></tbody> <!-- isi via JS -->
-                </table>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm text-center align-middle">
+                        <thead class="table-success">
+                            <tr>
+                                <th>Status Transaksi</th>
+                                <th>Tgl Transaksi</th>
+                                <th>Nominal</th>
+                                <th>Nominal DP</th>
+                                <th>Tahap</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-transaksi"></tbody>
+                    </table>
+                </div>
 
                 <!-- Progres + Marketing sejajar -->
                 <h6 class="pt-0 pb-0"><b>Progres Berkas:</b></h6>
@@ -223,7 +258,6 @@
                         <b>Marketing:</b> <span id="marketing"></span>
                     </div>
                 </div>
-
             </div>
 
             <div class="modal-footer">
@@ -232,6 +266,7 @@
         </div>
     </div>
 </div>
+
 
 
 <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
@@ -347,12 +382,12 @@ function load_query_map() {
             });
         }, 2000);
 
-
         // base_url dari PHP
         var base_url = "<?= base_url(); ?>";
 
-        // Event: saat polygon / rect diklik
-        $(document).on('click', '#svg polygon, #svg rect', function() {
+        // Event: saat polygon / rect diklik atau ditap
+        $(document).on('click touchstart pointerdown', '#svg polygon, #svg rect', function(e) {
+            e.preventDefault(); // cegah conflict
             var noKapling = $(this).attr('id');
             var idPerum = $('#data-site-plan').data('id_perum');
 
@@ -369,53 +404,70 @@ function load_query_map() {
                         if (res.success) {
                             let d = res.data;
 
-                            // --- Header Data ---
-                            $('#nama-perum').text(d.nama_perum);
-                            $('#nama-cus').text(d.transaksi[0].nama_cus);
-                            $('#no-wa').text(d.transaksi[0].no_wa);
-                            $('#blok').text(d.code);
-                            $('#type-unit').text(d.type_unit);
+                            // isi modal dengan fallback "-"
+                            $('#nama-perum').text(d.nama_perum || "-");
+                            $('#nama-cus').text((d.transaksi[0] && d.transaksi[0]
+                                .nama_cus) || "-");
+                            $('#no-wa').text((d.transaksi[0] && d.transaksi[0].no_wa) ||
+                                "-");
+                            $('#blok').text(d.code || "-");
+                            $('#type-unit').text(d.type_unit || "-");
 
-                            // --- Status Pembelian (badge) ---
-                            let statusPemb = d.status_pembayaran;
+                            // status pembelian
+                            let statusPemb = d.status_pembayaran || "-";
                             if (statusPemb === "KPR") {
                                 $('#status-pembelian').removeClass().addClass(
                                     "badge bg-success").text("KPR");
                             } else if (statusPemb === "CASH") {
                                 $('#status-pembelian').removeClass().addClass(
                                     "badge bg-primary").text("CASH");
+                            } else if (statusPemb === "-") {
+                                $('#status-pembelian').removeClass().addClass(
+                                    "badge bg-secondary").text("-");
                             } else {
                                 $('#status-pembelian').removeClass().addClass(
                                     "badge bg-secondary").text(statusPemb);
                             }
 
-                            // --- Transaksi (loop semua data) ---
+                            // isi tabel transaksi (jika kosong kasih 1 baris "-")
                             let tbody = "";
-                            d.transaksi.forEach(function(tr) {
-                                tbody += `
+                            if (d.transaksi && d.transaksi.length > 0) {
+                                d.transaksi.forEach(function(tr) {
+                                    tbody += `
+                                <tr>
+                                    <td>${tr.status_trans || "-"}</td>
+                                    <td>${tr.tgl_trans || "-"}</td>
+                                    <td>${tr.nominal ? "Rp. " + new Intl.NumberFormat('id-ID').format(tr.nominal) : "-"}</td>
+                                    <td>${tr.nominal_dp || "-"}</td>
+                                    <td>${tr.tahap || "-"}</td>
+                                </tr>
+                            `;
+                                });
+                            } else {
+                                tbody = `
                             <tr>
-                                <td>${tr.status_trans}</td>
-                                <td>${tr.tgl_trans}</td>
-                                <td>Rp. ${new Intl.NumberFormat('id-ID').format(tr.nominal)}</td>
-                                <td>${tr.nominal_dp}</td>
-                                <td>${tr.tahap}</td>
+                                <td colspan="5">-</td>
                             </tr>
                         `;
-                            });
+                            }
                             $("#tbody-transaksi").html(tbody);
 
-                            // --- Marketing ambil dari transaksi terakhir ---
-                            $('#marketing').text(d.transaksi[d.transaksi.length - 1]
-                                .user_admin);
+                            // marketing dari transaksi terakhir
+                            if (d.transaksi && d.transaksi.length > 0) {
+                                $('#marketing').text(d.transaksi[d.transaksi.length - 1]
+                                    .user_admin || "-");
+                            } else {
+                                $('#marketing').text("-");
+                            }
 
-                            // --- Progress ---
+                            // progress
                             let progress = d.progres_berkas ?? 0;
                             $('#progres-berkas')
                                 .css('width', progress + '%')
                                 .attr('aria-valuenow', progress);
                             $('#progres-text').text(progress + '%');
 
-                            // --- Show Modal ---
+                            // tampilkan modal
                             $('#tampilModal').modal('show');
                         } else {
                             alert(res.message);
