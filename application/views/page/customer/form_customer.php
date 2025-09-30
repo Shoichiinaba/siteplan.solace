@@ -8,7 +8,10 @@
                             <th>No.</th>
                             <th>nama</th>
                             <th>Email</th>
+                            <th>Domiasili</th>
                             <th>telepon</th>
+                            <th>Tanggal</th>
+                            <th>Jam</th>
                             <th>Perumahan</th>
                             <th>Jumlah Input</th>
                         </tr>

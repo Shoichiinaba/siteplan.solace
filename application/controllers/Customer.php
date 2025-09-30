@@ -25,6 +25,7 @@ class Customer extends AUTH_Controller
     }
 
     public function index()
+
     {
         $id = $this->session->userdata('userdata')->id;
         $role = $this->session->userdata('userdata')->role;
@@ -49,7 +50,10 @@ class Customer extends AUTH_Controller
             $row[] = $no.".";
             $row[] = $cus->nama_cus;
             $row[] = $cus->email;
+            $row[] = $cus->domisili;
             $row[] = $cus->telepon;
+            $row[] = date("d-m-Y", strtotime($cus->tanggal));
+            $row[] = $cus->jam;
             $row[] = $cus->nama_perum;
             $row[] = $cus->jml_input;
 
@@ -81,6 +85,7 @@ class Customer extends AUTH_Controller
     }
 
     function customer_lead()
+
     {
         $id = $this->session->userdata('userdata')->id;
         $role = $this->session->userdata('userdata')->role;
@@ -243,7 +248,7 @@ class Customer extends AUTH_Controller
         $id = $this->input->post('id');
         $id_denahs = $this->input->post('code');
         $nominal = $this->input->post('nominal');
-    
+
         if (!empty($id)) {
             $data = array(
                 'nama' => $this->input->post('nama'),
@@ -255,13 +260,13 @@ class Customer extends AUTH_Controller
                 'sumber' => $this->input->post('sumber'),
                 'hasil_fu' => $this->input->post('hasil_fu')
             );
-    
+
             $data_denah = array(
                 'type_unit' => $this->input->post('type_unit'),
                 'type' => 'Dipesan',
                 'color' => 'red',
             );
-    
+
             $data_trans = array(
                 'id_trans_denahs' => $id_denahs,
                 'nama_cus' => $this->input->post('nama'),
@@ -270,18 +275,18 @@ class Customer extends AUTH_Controller
                 'no_wa' => $this->input->post('no_tlp'),
                 'nominal' => $this->input->post('nominal'),
             );
-    
-    
+
+
             $update_status = $this->Visit_model->update_data('visit', $data, $id);
             $update_denah = true;
-    
+
             if ($update_status) {
                 if (!empty($id_denahs)) {
                     $update_denah = $this->Visit_model->update_denah('denahs', $data_denah, $id_denahs);
                 }
-    
+
                 $result = $this->Visit_model->save_trans($data_trans);
-    
+
                 if ($result) {
                     $response['status'] = true;
                     $response['message'] = 'Data berhasil diperbarui.';
@@ -297,7 +302,7 @@ class Customer extends AUTH_Controller
             $response['status'] = false;
             $response['message'] = 'ID tidak valid. Data tidak dapat diperbarui.';
         }
-    
+
         header('Content-Type: application/json');
         echo json_encode($response);
     }
