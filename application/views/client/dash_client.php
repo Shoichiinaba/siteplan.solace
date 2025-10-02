@@ -109,8 +109,12 @@
                         <input type="number" class="form-control" autocomplete="off" required=""
                             placeholder="No. telp 62" name="telepon" aria-describedby="email-addon">
                     </div>
-                    <div class="input-group mb-3">
+                    <!-- <div class="input-group mb-3">
                         <select id="domisili" name="domisili" class="form-control w-100" required></select>
+                    </div> -->
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" name="domisili" required="" autocomplete="off"
+                            placeholder="Ketikan Domisili Anda...">
                     </div>
                     <div class="input-group mb-3" hidden>
                         <input type="text" id="nm-perum" name="perum">
