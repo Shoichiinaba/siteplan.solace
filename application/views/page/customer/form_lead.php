@@ -270,13 +270,13 @@ textarea:focus+label {
                     </a>
                 </div>
                 <?php if ($userdata->role == 'Marketing') : ?>
-                <?php endif; ?>
                 <div class="col-lg-2 col-xxl-2 col-md-3 text-end">
                     <button type="button" class="btn bg-gradient-info btn-sm rounded-3" data-bs-toggle="modal"
                         data-bs-target="#tambah-data"> <i class="" style="font-size:small;"></i>
                         &nbsp; Input Lead
                     </button>
                 </div>
+                <?php endif; ?>
             </div>
             <div class="table-responsive p-0">
                 <table id="list-lead" class="table align-items-center mb-0">

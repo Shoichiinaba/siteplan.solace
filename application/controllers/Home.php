@@ -1443,120 +1443,281 @@ class Home extends CI_Controller
     }
 
     function load_data_transaksi()
-    {
-        $id_trans_denahs = $this->input->post('id-trans-denahs');
+{
+    $id_trans_denahs = $this->input->post('id-trans-denahs');
 
-        $sql = "SELECT *FROM transaksi WHERE id_trans_denahs = $id_trans_denahs ORDER BY status_trans DESC";
-        $query = $this->db->query($sql);
-        if ($query->num_rows() > 0) {
-            foreach ($query->result() as $row) {
-                $nama_cus = $row->nama_cus;
-                $no_wa = $row->no_wa;
-                $kontak = $this->input->post('kontak');
-                //Terlebih dahulu kita trim dl
-                $nomorhp = trim($no_wa);
-                //bersihkan dari karakter yang tidak perlu
-                $nomorhp = strip_tags($nomorhp);
-                // Berishkan dari spasi
-                $nomorhp = str_replace(" ", "", $nomorhp);
-                // bersihkan dari bentuk seperti  (022) 66677788
-                $nomorhp = str_replace("(", "", $nomorhp);
-                // bersihkan dari format yang ada titik seperti 0811.222.333.4
-                $nomorhp = str_replace(".", "", $nomorhp);
+    $sql = "SELECT * FROM transaksi WHERE id_trans_denahs = $id_trans_denahs ORDER BY status_trans DESC";
+    $query = $this->db->query($sql);
 
-                //cek apakah mengandung karakter + dan 0-9
-                if (!preg_match('/[^+0-9]/', trim($nomorhp))) {
-                    // cek apakah no hp karakter 1-3 adalah +62
-                    if (substr(trim($nomorhp), 0, 3) == '+62') {
-                        $nomorhp = trim($nomorhp);
-                        // echo $nomorhp;
-                    }
-                    // cek apakah no hp karakter 1 adalah 0
-                    elseif (substr($nomorhp, 0, 1) == '0') {
-                        $nomorhp = '62' . substr($nomorhp, 1);
-                        // $nomorhp1 = str_replace("'", "", $nomorhp);
-                    }
-                }
-                echo $row->status_trans . $row->nama_cus;
-                echo '<tr class="tr">
-                            <td class="text-center">' . $row->status_trans . '</td>
-                            <td class="text-center">' . $row->tgl_trans . '</td>
-                            <td class="text-center">' . $row->tahap . '</td>
-                            <td class="text-center">' . $row->nominal . '</td>
-                            <td class="text-center"><button type="button" class="btn btn-danger btn-small btn-delete-transaksi" data-id-trans="' . $row->id_trans . '">Hapus</button></td>
-                            <td class="text-center">' . $row->tgl_update . '</td>
-                            <td class="text-center">' . $row->user_admin . '</td>
-                        </tr>';
-            }
-            echo '<tr class="tr">';
-            echo '<td style="background: blanchedalmond;">Nominal DP</td>';
-            echo '<td colspan="6" style="background: beige;" > : Rp. ' . $row->nominal_dp . '</td>';
-            echo '<td class="td-nominal-dp" hidden>' . $row->nominal_dp . '</td>';
-            echo '</tr>';
-            $sql = "SELECT SUM(nominal) AS total_nominal, nominal_dp FROM transaksi WHERE id_trans_denahs = $id_trans_denahs AND status_trans='DP'";
-            $query = $this->db->query($sql);
-            if ($query->num_rows() > 0) {
-                foreach ($query->result() as $count) {
-                    if ($row->nominal_dp == $count->total_nominal) {
+    if ($query->num_rows() > 0) {
+        foreach ($query->result() as $row) {
+            $nama_cus = $row->nama_cus;
+            $no_wa    = $row->no_wa;
+            $kontak   = $this->input->post('kontak');
 
-                        echo '<tr class="tr">';
-                        echo '<td style="background: blanchedalmond;">DP dibayar</td>';
-                        echo '<td colspan="6" style="background: beige;"> : Rp. ' . $count->total_nominal . '  -> LUNAS</td>';
-                        echo '</tr>';
-                    } else {
-                        echo '<tr class="tr">';
-                        echo '<td style="background: blanchedalmond;">DP dibayar</td>';
-                        echo '<td colspan="6" style="background: beige;"> : Rp. ' . $count->total_nominal . '</td>';
-                        echo '</tr>';
-                    }
+            // format rupiah function
+            $format_rp = function ($angka) {
+                return 'Rp. ' . number_format($angka, 0, ',', '.');
+            };
+
+            // --- format nomor WA ---
+            $nomorhp = trim($no_wa);
+            $nomorhp = strip_tags($nomorhp);
+            $nomorhp = str_replace([" ", "(", ")", "."], "", $nomorhp);
+
+            if (!preg_match('/[^+0-9]/', $nomorhp)) {
+                if (substr($nomorhp, 0, 3) == '+62') {
+                    $nomorhp = $nomorhp;
+                } elseif (substr($nomorhp, 0, 1) == '0') {
+                    $nomorhp = '62' . substr($nomorhp, 1);
                 }
             }
-            echo '<script>
-                        if ($("#type").val()=="Sold Out") {
-                            $(".btn-delete-transaksi").hide();
-                        } else {
-                            $(".btn-delete-transaksi").show();
-                        }
-                          $("#nama-cus").val("' . $nama_cus . '");
-                                $("#no-wa").val("' . $nomorhp . '");
-                                $(".chat-wa").attr("href", "https://api.whatsapp.com/send?phone=' . $nomorhp . '&text=");
-                                $(".btn-delete-transaksi").click(function() {
-                                    // alert($(this).data("id-trans"));
-                                    var el = this;
 
-                                    // Delete id
-                                    var confirmalert = confirm("Apakah anda yakin untuk menghapus transaksi ..?");
-                                    if (confirmalert == true) {
-                                        let formData = new FormData();
-                                        formData.append("id-trans", $(this).data("id-trans"));
-                                        $.ajax({
-                                            type: "POST",
-                                            url: "' . site_url("Home/delete_data_transaksi") . '",
-                                            data: formData,
-                                            cache: false,
-                                            processData: false,
-                                            contentType: false,
-                                            success: function(msg) {
-                                                $(el).closest("tr").css("background", "tomato");
-                                                $(el).closest("tr").fadeOut(300, function() {
-                                                    $(this).remove();
-                                                });
-                                                load_data_transaksi();
-
-                                            }
-                                        });
-                                    }
-                                });
-                            </script>';
-        } else {
-
-            echo '<script>
-                                    $("#nama-cus").val("");
-                                    $("#no-wa").val("");
-
-                                    </script>';
+            // tampilkan transaksi
+            echo '<tr class="tr">
+                        <td class="text-center">' . $row->status_trans . '</td>
+                        <td class="text-center">' . $row->tgl_trans . '</td>
+                        <td class="text-center">' . $row->tahap . '</td>
+                        <td class="text-center">' . $format_rp($row->nominal) . '</td>
+                        <td class="text-center"><button type="button" class="btn btn-danger btn-small btn-delete-transaksi" data-id-trans="' . $row->id_trans . '">Hapus</button></td>
+                        <td class="text-center">' . $row->tgl_update . '</td>
+                        <td class="text-center">' . $row->user_admin . '</td>
+                    </tr>';
         }
+
+        // --- Nominal DP Utama ---
+        $nominal_dp = $row->nominal_dp;
+        echo '<tr class="tr">';
+        echo '<td style="background: blanchedalmond;">Nominal DP</td>';
+        echo '<td colspan="6" style="background: beige;" > : ' . $format_rp($row->nominal_dp) . '</td>';
+        echo '<td class="td-nominal-dp" hidden>' . $row->nominal_dp . '</td>';
+        echo '</tr>';
+
+        // --- cek total DP dibayar ---
+        $sql_dp = "SELECT SUM(nominal) AS total_nominal
+                FROM transaksi
+                WHERE id_trans_denahs = $id_trans_denahs AND status_trans='DP'";
+        $query_dp = $this->db->query($sql_dp);
+
+        $total_dp_dibayar = 0;
+        if ($query_dp->num_rows() > 0) {
+            $total_dp_dibayar = $query_dp->row()->total_nominal;
+
+            if ($row->nominal_dp == $total_dp_dibayar) {
+                echo '<tr class="tr">';
+                echo '<td style="background: blanchedalmond;">DP dibayar</td>';
+                echo '<td colspan="6" style="background: beige;"> : ' . $format_rp($total_dp_dibayar) . '  -> LUNAS</td>';
+                echo '</tr>';
+            } else {
+                echo '<tr class="tr">';
+                echo '<td style="background: blanchedalmond;">DP dibayar</td>';
+                echo '<td colspan="6" style="background: beige;"> : ' . $format_rp($total_dp_dibayar) . '</td>';
+                echo '</tr>';
+            }
+        }
+
+        // --- hitung sisa DP ---
+        $sisa_dp = $nominal_dp - $total_dp_dibayar;
+        if ($sisa_dp < 0) $sisa_dp = 0;
+
+        // --- cek apakah ada transaksi UTJ ---
+        $sql_utj = "SELECT nominal
+                    FROM transaksi
+                    WHERE id_trans_denahs = $id_trans_denahs AND status_trans='UTJ'
+                    LIMIT 1";
+        $query_utj = $this->db->query($sql_utj);
+
+        if ($query_utj->num_rows() > 0) {
+            $utj_nominal = $query_utj->row()->nominal;
+            $script_utj = '
+                window.UTJsudahAda = true;
+                window.nominalUTJ  = ' . intval($utj_nominal) . ';
+            ';
+        } else {
+            $script_utj = '
+                window.UTJsudahAda = false;
+                window.nominalUTJ  = 0;
+            ';
+        }
+
+        // kirim variabel ke javascript
+        echo '<script>
+                window.nominalDP      = ' . intval($nominal_dp) . ';
+                window.totalDPdibayar = ' . intval($total_dp_dibayar) . ';
+                window.sisaDP         = ' . intval($sisa_dp) . ';
+                ' . $script_utj . '
+            </script>';
+
+        // script delete tetap
+        echo '<script>
+                if ($("#type").val()=="Sold Out") {
+                    $(".btn-delete-transaksi").hide();
+                } else {
+                    $(".btn-delete-transaksi").show();
+                }
+                $("#nama-cus").val("' . $nama_cus . '");
+                $("#no-wa").val("' . $nomorhp . '");
+                $(".chat-wa").attr("href", "https://api.whatsapp.com/send?phone=' . $nomorhp . '&text=");
+                $(".btn-delete-transaksi").click(function() {
+                    var el = this;
+                    var confirmalert = confirm("Apakah anda yakin untuk menghapus transaksi ..?");
+                    if (confirmalert == true) {
+                        let formData = new FormData();
+                        formData.append("id-trans", $(this).data("id-trans"));
+                        $.ajax({
+                            type: "POST",
+                            url: "' . site_url("Home/delete_data_transaksi") . '",
+                            data: formData,
+                            cache: false,
+                            processData: false,
+                            contentType: false,
+                            success: function(msg) {
+                                $(el).closest("tr").css("background", "tomato");
+                                $(el).closest("tr").fadeOut(300, function() {
+                                    $(this).remove();
+                                });
+                                load_data_transaksi();
+                            }
+                        });
+                    }
+                });
+            </script>';
+    } else {
+        echo '<script>
+                $("#nama-cus").val("");
+                $("#no-wa").val("");
+                window.UTJsudahAda = false;
+                window.nominalUTJ  = 0;
+            </script>';
     }
+}
+
+    // function load_data_transaksi()
+    // {
+    //     $id_trans_denahs = $this->input->post('id-trans-denahs');
+
+    //     $sql = "SELECT * FROM transaksi WHERE id_trans_denahs = $id_trans_denahs ORDER BY status_trans DESC";
+    //     $query = $this->db->query($sql);
+
+    //     if ($query->num_rows() > 0) {
+    //         foreach ($query->result() as $row) {
+    //             $nama_cus = $row->nama_cus;
+    //             $no_wa    = $row->no_wa;
+    //             $kontak   = $this->input->post('kontak');
+
+    //             // format rupiah function
+    //             $format_rp = function ($angka) {
+    //                 return 'Rp. ' . number_format($angka, 0, ',', '.');
+    //             };
+
+    //             // --- format nomor WA ---
+    //             $nomorhp = trim($no_wa);
+    //             $nomorhp = strip_tags($nomorhp);
+    //             $nomorhp = str_replace([" ", "(", ")", "."], "", $nomorhp);
+
+    //             if (!preg_match('/[^+0-9]/', $nomorhp)) {
+    //                 if (substr($nomorhp, 0, 3) == '+62') {
+    //                     $nomorhp = $nomorhp;
+    //                 } elseif (substr($nomorhp, 0, 1) == '0') {
+    //                     $nomorhp = '62' . substr($nomorhp, 1);
+    //                 }
+    //             }
+
+    //             // tampilkan transaksi
+    //             echo '<tr class="tr">
+    //                         <td class="text-center">' . $row->status_trans . '</td>
+    //                         <td class="text-center">' . $row->tgl_trans . '</td>
+    //                         <td class="text-center">' . $row->tahap . '</td>
+    //                         <td class="text-center">' . $format_rp($row->nominal) . '</td>
+    //                         <td class="text-center"><button type="button" class="btn btn-danger btn-small btn-delete-transaksi" data-id-trans="' . $row->id_trans . '">Hapus</button></td>
+    //                         <td class="text-center">' . $row->tgl_update . '</td>
+    //                         <td class="text-center">' . $row->user_admin . '</td>
+    //                     </tr>';
+    //         }
+
+    //         // --- Nominal DP Utama ---
+    //         $nominal_dp = $row->nominal_dp;
+    //         echo '<tr class="tr">';
+    //         echo '<td style="background: blanchedalmond;">Nominal DP</td>';
+    //         echo '<td colspan="6" style="background: beige;" > : ' . $format_rp($row->nominal_dp) . '</td>';
+    //         echo '<td class="td-nominal-dp" hidden>' . $row->nominal_dp . '</td>';
+    //         echo '</tr>';
+
+    //         // --- cek total DP dibayar ---
+    //         $sql_dp = "SELECT SUM(nominal) AS total_nominal
+    //                 FROM transaksi
+    //                 WHERE id_trans_denahs = $id_trans_denahs AND status_trans='DP'";
+    //         $query_dp = $this->db->query($sql_dp);
+
+    //         $total_dp_dibayar = 0;
+    //         if ($query_dp->num_rows() > 0) {
+    //             $total_dp_dibayar = $query_dp->row()->total_nominal;
+
+    //             if ($row->nominal_dp == $total_dp_dibayar) {
+    //                 echo '<tr class="tr">';
+    //                 echo '<td style="background: blanchedalmond;">DP dibayar</td>';
+    //                 echo '<td colspan="6" style="background: beige;"> : ' . $format_rp($total_dp_dibayar) . '  -> LUNAS</td>';
+    //                 echo '</tr>';
+    //             } else {
+    //                 echo '<tr class="tr">';
+    //                 echo '<td style="background: blanchedalmond;">DP dibayar</td>';
+    //                 echo '<td colspan="6" style="background: beige;"> : ' . $format_rp($total_dp_dibayar) . '</td>';
+    //                 echo '</tr>';
+    //             }
+    //         }
+
+    //         // --- hitung sisa DP ---
+    //         $sisa_dp = $nominal_dp - $total_dp_dibayar;
+    //         if ($sisa_dp < 0) $sisa_dp = 0;
+
+    //         // kirim variabel ke javascript
+    //         echo '<script>
+    //                 window.nominalDP      = ' . intval($nominal_dp) . ';
+    //                 window.totalDPdibayar = ' . intval($total_dp_dibayar) . ';
+    //                 window.sisaDP         = ' . intval($sisa_dp) . ';
+    //             </script>';
+
+    //         // script delete tetap
+    //         echo '<script>
+    //                 if ($("#type").val()=="Sold Out") {
+    //                     $(".btn-delete-transaksi").hide();
+    //                 } else {
+    //                     $(".btn-delete-transaksi").show();
+    //                 }
+    //                 $("#nama-cus").val("' . $nama_cus . '");
+    //                 $("#no-wa").val("' . $nomorhp . '");
+    //                 $(".chat-wa").attr("href", "https://api.whatsapp.com/send?phone=' . $nomorhp . '&text=");
+    //                 $(".btn-delete-transaksi").click(function() {
+    //                     var el = this;
+    //                     var confirmalert = confirm("Apakah anda yakin untuk menghapus transaksi ..?");
+    //                     if (confirmalert == true) {
+    //                         let formData = new FormData();
+    //                         formData.append("id-trans", $(this).data("id-trans"));
+    //                         $.ajax({
+    //                             type: "POST",
+    //                             url: "' . site_url("Home/delete_data_transaksi") . '",
+    //                             data: formData,
+    //                             cache: false,
+    //                             processData: false,
+    //                             contentType: false,
+    //                             success: function(msg) {
+    //                                 $(el).closest("tr").css("background", "tomato");
+    //                                 $(el).closest("tr").fadeOut(300, function() {
+    //                                     $(this).remove();
+    //                                 });
+    //                                 load_data_transaksi();
+    //                             }
+    //                         });
+    //                     }
+    //                 });
+    //             </script>';
+    //     } else {
+    //         echo '<script>
+    //                 $("#nama-cus").val("");
+    //                 $("#no-wa").val("");
+    //             </script>';
+    //     }
+    // }
 
     function upload_transaksi()
     {

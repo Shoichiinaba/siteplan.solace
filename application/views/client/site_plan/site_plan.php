@@ -235,12 +235,13 @@ svg {
                                 <th>Status Transaksi</th>
                                 <th>Tgl Transaksi</th>
                                 <th>Nominal</th>
-                                <th>Nominal DP</th>
                                 <th>Tahap</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-transaksi"></tbody>
                     </table>
+                    <!-- Ringkasan DP -->
+                    <div id="ringkasan-dp" class="mt-3"></div>
                 </div>
 
                 <!-- Progres + Marketing sejajar -->
@@ -438,7 +439,6 @@ function load_query_map() {
                                     <td>${tr.status_trans || "-"}</td>
                                     <td>${tr.tgl_trans || "-"}</td>
                                     <td>${tr.nominal ? "Rp. " + new Intl.NumberFormat('id-ID').format(tr.nominal) : "-"}</td>
-                                    <td>${tr.nominal_dp ? "Rp. " + new Intl.NumberFormat('id-ID').format(tr.nominal) : "-"}</td>
                                     <td>${tr.tahap || "-"}</td>
                                 </tr>
                             `;
@@ -446,11 +446,57 @@ function load_query_map() {
                             } else {
                                 tbody = `
                             <tr>
-                                <td colspan="5">-</td>
+                                <td colspan="4" class="text-center">-</td>
                             </tr>
                         `;
                             }
                             $("#tbody-transaksi").html(tbody);
+
+                            // --- Hitung Nominal DP, DP Dibayar, Kekurangan ---
+                            let nominalDP = 0;
+                            let totalDPdibayar = 0;
+
+                            if (d.transaksi && d.transaksi.length > 0) {
+                                d.transaksi.forEach(tr => {
+                                    if (tr.status_trans === "DP") {
+                                        totalDPdibayar += parseInt(tr.nominal) || 0;
+                                        nominalDP = parseInt(tr.nominal_dp) ||
+                                            nominalDP;
+                                    }
+                                });
+                            }
+
+                            let sisaDP = (nominalDP > 0 ? nominalDP - totalDPdibayar : 0);
+
+                            function formatRp(angka) {
+                                return "Rp. " + new Intl.NumberFormat('id-ID').format(
+                                    angka || 0);
+                            }
+
+                            let ringkasanHTML = `
+                        <table class="table table-bordered table-sm mt-2">
+                            <tr>
+                                <td class="fw-bold" style="width:150px;">Nominal DP</td>
+                                <td>${nominalDP > 0 ? formatRp(nominalDP) : "-"}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">DP Dibayar</td>
+                                <td>${totalDPdibayar > 0 ? formatRp(totalDPdibayar) : "-"}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Kekurangan</td>
+                                <td>
+                                    ${sisaDP > 0
+                                        ? formatRp(sisaDP)
+                                        : (nominalDP > 0
+                                            ? '<span class="badge bg-success">LUNAS</span>'
+                                            : '-')}
+                                </td>
+                            </tr>
+                        </table>
+                    `;
+
+                            $("#ringkasan-dp").html(ringkasanHTML);
 
                             // marketing dari transaksi terakhir
                             if (d.transaksi && d.transaksi.length > 0) {
@@ -473,12 +519,11 @@ function load_query_map() {
                             alert(res.message);
                         }
                     },
-                    error: function() {
-                        alert("Terjadi kesalahan saat mengambil data blok.");
-                    }
+
                 });
             }
         });
+
 
     });
 }
