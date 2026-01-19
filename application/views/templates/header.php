@@ -25,7 +25,8 @@
     <link rel="stylesheet" href="//cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
 
     <!-- datatables js -->
-    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <script src="<?php echo base_url('assets/js/datatables.min.js') ?>"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
     <!-- select2 -->
@@ -44,26 +45,71 @@
     <!-- sweetalert -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- akhir sweetalert -->
+    <style>
+    /* ===== SVG AREA ===== */
+    </style>
 
     <style>
-    .async-hide {
-        opacity: 0 !important
-    }
-
-    /* body {
-        padding-top: 70px;
-        padding-bottom: 30px;
-    } */
-
     svg {
-        /* border: 1px solid purple; */
         display: block;
         margin-left: auto;
         margin-right: auto;
         height: auto;
         width: -webkit-fill-available;
-        max-height: 22rem;
+        max-height: 22rem !important;
 
+    }
+
+    #svg-container {
+        position: relative;
+        margin-bottom: 12px;
+        margin-top: 8px;
+        margin-right: 220px z-index: 1;
+    }
+
+    #data-siteplan {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+
+    /* SVG jangan makan klik */
+    #data-siteplan svg {
+        width: 100% !important;
+        height: auto !important;
+        pointer-events: none !important;
+        display: block;
+    }
+
+    /* Tapi shape SVG tetap bisa diklik */
+    #data-siteplan svg path,
+    #data-siteplan svg polygon,
+    #data-siteplan svg rect {
+        pointer-events: all !important;
+        cursor: pointer;
+    }
+
+    /* ===== CONTROL PANEL ===== */
+    #example2 {
+        position: relative;
+        z-index: 99999;
+        /* PENTING */
+        text-align: center;
+    }
+
+    #example2 .btn {
+        pointer-events: auto !important;
+        cursor: pointer;
+        margin: 3px;
+    }
+
+    /* Layout */
+    .controls-pan,
+    .controls-zoom,
+    .controls-keterangan {
+        display: inline-block;
+        vertical-align: top;
+        margin: 5px;
     }
 
     div.controls {
@@ -82,7 +128,6 @@
         display: inline-block;
         text-align: right;
         margin-bottom: 1px;
-        /* margin-left: 188px; */
     }
 
     div.controls-zoom,
@@ -95,12 +140,6 @@
         margin-left: 20px;
     }
 
-    #svg-container {
-        position: relative;
-        margin-bottom: 12px;
-        margin-top: 8px;
-        margin-right: 220px
-    }
 
     .panel-table {
         padding: 0px 20px 0px 20px;
@@ -130,61 +169,129 @@
 
     }
     </style>
-    <script type="text/javascript"
-        src="https://rawgit.com/DanielHoffmann/jquery-svg-pan-zoom/master/compiled/jquery.svg.pan.zoom.js">
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
     <script>
-    var example1, example2;
-    $(function() {
-        // "use strict";
-        var examples = $("#svg").svgPanZoom();
+    let panZoomInstance = null;
 
-        var callback = function(example) {
-            return function(event) {
-                if ($(event.target).hasClass("fa-arrow-down"))
-                    example.panUp()
-                if ($(event.target).hasClass("fa-arrow-up"))
-                    example.panDown()
-                if ($(event.target).hasClass("fa-arrow-right"))
-                    example.panLeft()
-                if ($(event.target).hasClass("fa-arrow-left"))
-                    example.panRight()
-                if ($(event.target).hasClass("fa-plus"))
-                    example.zoomIn()
-                if ($(event.target).hasClass("fa-minus"))
-                    example.zoomOut()
-                if ($(event.target).hasClass("fa-refresh"))
-                    example.reset()
-            }
-        };
+    $(document).ready(function() {
 
+        const container = document.getElementById('data-siteplan');
 
-        $("#example2 i").click(callback(examples));
-        setTimeout(function() {
-            var perum = '<?= $this->uri->segment(3) ?>'
-            var denah = $('.cls-2');
-            var data = new FormData();
-            var param = [];
-            for (var i = 0; i < denah.length; i++) {
-                if (denah[i].id) {
-                    param[i] = denah[i].id;
-                    data.append('id[]', denah[i].id);
-                }
-            }
-            // alert('<?= $this->uri->segment(3) ?>');
-            $.ajax({
-                url: "<?php echo base_url('index.php/home/allDenahColor/'); ?>" + perum,
-                data: [],
-                type: 'GET',
-                success: function(data) {
-                    for (var i = 0; i < data.results.length; i++) {
-                        var path = data.results[i]
-                        $(`#${path.code}`).css('fill', path.color);
-                    }
-                    // alert(data);
+        if (!container) {
+            console.error('Container #data-siteplan tidak ditemukan');
+            return;
+        }
+
+        /* ===============================
+         * INIT PANZOOM (AMAN UNTUK SVG STATIS & DINAMIS)
+         * =============================== */
+        function initPanZoom(svg) {
+            if (panZoomInstance) return;
+
+            // console.log('Init svgPanZoom');
+
+            panZoomInstance = svgPanZoom(svg, {
+                zoomEnabled: true,
+                fit: true,
+                center: true,
+                minZoom: 0.5,
+                maxZoom: 10
+            });
+
+            setTimeout(() => {
+                panZoomInstance.resize();
+                panZoomInstance.fit();
+                panZoomInstance.center();
+            }, 100);
+        }
+
+        /* ===============================
+         * CEK LANGSUNG (SVG DARI PHP)
+         * =============================== */
+        const svgNow = container.querySelector('svg');
+        if (svgNow) {
+            initPanZoom(svgNow);
+        } else {
+            /* ===============================
+             * OBSERVER (SVG DARI AJAX)
+             * =============================== */
+            const observer = new MutationObserver(() => {
+                const svg = container.querySelector('svg');
+                if (svg) {
+                    initPanZoom(svg);
+                    observer.disconnect();
                 }
             });
-        }, 2000);
+
+            observer.observe(container, {
+                childList: true,
+                subtree: true
+            });
+        }
+
+        /* ===============================
+         * BUTTON PAN & ZOOM
+         * =============================== */
+        $('#example2').on('click', '.btn', function() {
+
+            if (!panZoomInstance) {
+                console.warn('panZoom belum siap');
+                return;
+            }
+
+            const step = 80;
+
+            if ($(this).hasClass('fa-arrow-up')) {
+                panZoomInstance.panBy({
+                    x: 0,
+                    y: step
+                });
+            } else if ($(this).hasClass('fa-arrow-down')) {
+                panZoomInstance.panBy({
+                    x: 0,
+                    y: -step
+                });
+            } else if ($(this).hasClass('fa-arrow-left')) {
+                panZoomInstance.panBy({
+                    x: step,
+                    y: 0
+                });
+            } else if ($(this).hasClass('fa-arrow-right')) {
+                panZoomInstance.panBy({
+                    x: -step,
+                    y: 0
+                });
+            } else if ($(this).hasClass('fa-plus')) {
+                panZoomInstance.zoomIn();
+            } else if ($(this).hasClass('fa-minus')) {
+                panZoomInstance.zoomOut();
+            } else if ($(this).hasClass('fa-refresh')) {
+                panZoomInstance.resetZoom();
+                panZoomInstance.center();
+            }
+        });
+
+        /* ===============================
+         * AJAX WARNA DENAH
+         * =============================== */
+        setTimeout(function() {
+            var perum = '<?= $this->uri->segment(3) ?>';
+
+            $.ajax({
+                url: "<?= base_url('index.php/home/allDenahColor/'); ?>" + perum,
+                type: 'GET',
+                success: function(data) {
+                    if (!data.results) return;
+
+                    data.results.forEach(item => {
+                        $('#' + item.code).css('fill', item.color);
+                    });
+                }
+            });
+        }, 300);
+
     });
     </script>
+
+
 </head>

@@ -142,24 +142,26 @@ sup {
                 <div class="card h-100 card-plain border">
                     <div id="example2" class="controls">
                         <div class="controls-pan">
-                            <p><i class="btn btn-success fa fa-arrow-up"></i></p>
+                            <p><button type="button" class="btn btn-success fa fa-arrow-up"></button></p>
                             <p>
-                                <i class="btn btn-success fa fa-arrow-left"></i>
-                                <i class="btn btn-success fa fa-arrow-right"></i>
+                                <button type="button" class="btn btn-success fa fa-arrow-left"></button>
+                                <button type="button" class="btn btn-success fa fa-arrow-right"></button>
                             </p>
-                            <p><i class="btn btn-success fa fa-arrow-down"></i></p>
+                            <p><button type="button" class="btn btn-success fa fa-arrow-down"></button></p>
                         </div>
+
                         <div class="controls-zoom">
-                            <p><i class="btn btn-warning fa fa-refresh"></i></p>
-                            <p><i class="btn btn-danger fa fa-plus"></i></p>
-                            <p><i class="btn btn-danger fa fa-minus"></i></p>
+                            <p><button type="button" class="btn btn-warning fa fa-refresh"></button></p>
+                            <p><button type="button" class="btn btn-danger fa fa-plus"></button></p>
+                            <p><button type="button" class="btn btn-danger fa fa-minus"></button></p>
                         </div>
-                        <br><br>
+
                         <div class="controls-keterangan">
-                            <p><span class="badge bg-gradient-danger">Dipesan</span></P>
-                            <p><span style="background-color: yellow" class="badge text-dark">Sold Out</span></P>
-                            <p><span class="badge bg-gradient-info">Rumah Ready</span></P>
+                            <p><span class="badge bg-gradient-danger">Dipesan</span></p>
+                            <p><span class="badge bg-warning text-dark">Sold Out</span></p>
+                            <p><span class="badge bg-gradient-info">Rumah Ready</span></p>
                         </div>
+
                     </div>
                 </div>
             </div>
