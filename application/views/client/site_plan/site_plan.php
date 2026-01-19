@@ -8,10 +8,10 @@
 }
 
 
-svg {
+/* svg {
     width: 100%;
     height: auto;
-}
+} */
 
 #svg polygon,
 #svg rect {
@@ -28,15 +28,30 @@ svg {
 
 #svg-container {
     position: relative;
-    z-index: 1;
-    /* jangan terlalu tinggi dulu */
+    width: 100%;
+    height: 70vh;
+    /* FIX tinggi */
+    min-height: 500px;
+    max-height: 800px;
 }
 
-#svg {
-    position: relative;
-    z-index: 2;
+#data-site-plan {
+    width: 100%;
+    height: 100%;
 }
 
+#data-site-plan svg {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+
+#svg-container svg {
+    width: 100%;
+    height: auto;
+    max-height: 80vh;
+    /* supaya tidak kepanjangan */
+}
 
 .progress {
     height: 15px;
@@ -117,7 +132,8 @@ svg {
                     <div class="overflow-hidden position-relative border-radius-lg bg-cover h-100"
                         style="background-image: url('<?= base_url(); ?>assets_adm/img/map1.jpg');">
                         <span class="mask bg-gradient-light"></span>
-                        <div class="card-body position-relative z-index-1 d-flex flex-column h-100 p-3">
+                        <!-- <div class="card-body position-relative z-index-1 d-flex flex-column h-100 p-3"> -->
+                        <div class="card-body position-relative z-index-1 p-3">
                             <!-- tes menu tab-->
                             <div class="tab-content" id="v-pills-tabContent">
                                 <div class="tab-pane fade show position-relative active" id="selatan" role="tabpanel"
@@ -132,7 +148,7 @@ svg {
                                             style="justify-content: center; display: flex;">
                                         </div>
 
-                                        <div class="keterangan">
+                                        <div class="keterangan-fixed">
                                             <?php
                                                 $sold = 0; $dipesan = 0; $ready = 0;
                                                 if (!empty($status_count)) {
@@ -301,230 +317,197 @@ $('.btn-area').click(function(e) {
 });
 
 function load_query_map() {
-    var example1, example2; //globals so we can manipulate them in the debugger
     $(function() {
         "use strict";
-        var examples = $("#svg").svgPanZoom();
 
-        var callback = function(example) {
+        /* ===============================
+         * INIT SVG PAN ZOOM (VANILLA)
+         * =============================== */
+        var panZoom = svgPanZoom('#svg', {
+            zoomEnabled: true,
+            controlIconsEnabled: false,
+            fit: true,
+            center: true,
+            minZoom: 0.6,
+            maxZoom: 10
+        });
+
+        /* ===============================
+         * CALLBACK ICON PAN / ZOOM
+         * =============================== */
+        function callback(instance) {
             return function(event) {
-                if ($(event.target).hasClass("fa-arrow-down"))
-                    example.panUp()
-                if ($(event.target).hasClass("fa-arrow-up"))
-                    example.panDown()
-                if ($(event.target).hasClass("fa-arrow-right"))
-                    example.panLeft()
-                if ($(event.target).hasClass("fa-arrow-left"))
-                    example.panRight()
-                if ($(event.target).hasClass("fa-plus"))
-                    example.zoomIn()
-                if ($(event.target).hasClass("fa-minus"))
-                    example.zoomOut()
-                if ($(event.target).hasClass("fa-refresh"))
-                    example.reset()
-            }
-        };
+                var $t = $(event.target);
+                var step = 50; // jarak geser (px)
 
-        $("#example2 i").click(callback(examples));
-        setTimeout(function() {
-            var perum = '<?= $this->uri->segment(3) ?>'
-            var denah = $('.cls-2');
-            var data = new FormData();
-            var param = [];
-            for (var i = 0; i < denah.length; i++) {
-                if (denah[i].id) {
-                    param[i] = denah[i].id;
-                    data.append('id[]', denah[i].id);
+                if ($t.hasClass("fa-arrow-up")) {
+                    instance.panBy({
+                        x: 0,
+                        y: step
+                    });
                 }
-            }
-            // alert('<?= $this->uri->segment(3) ?>');
-            $.ajax({
-                url: "<?php echo base_url('index.php/home/allDenahColor/') ?>" + perum,
-                data: [],
-                type: 'GET',
-                success: function(data) {
-                    for (var i = 0; i < data.results.length; i++) {
-                        var path = data.results[i]
-                        $(`#${path.code}`).css('fill', path.color);
-                    }
-                    // alert(data);
+                if ($t.hasClass("fa-arrow-down")) {
+                    instance.panBy({
+                        x: 0,
+                        y: -step
+                    });
                 }
-            });
-        }, 2000);
-
-        // Saat polygon atau rect diklik
-        var base_url = "<?= base_url(); ?>";
-        // tombol navigasi pan/zoom
-        $("#example2 i").click(callback(examples));
-
-        setTimeout(function() {
-            var perum = '<?= $this->uri->segment(3) ?>'
-            var denah = $('.cls-2');
-            var data = new FormData();
-            var param = [];
-
-            for (var i = 0; i < denah.length; i++) {
-                if (denah[i].id) {
-                    param[i] = denah[i].id;
-                    data.append('id[]', denah[i].id);
+                if ($t.hasClass("fa-arrow-left")) {
+                    instance.panBy({
+                        x: step,
+                        y: 0
+                    });
                 }
-            }
+                if ($t.hasClass("fa-arrow-right")) {
+                    instance.panBy({
+                        x: -step,
+                        y: 0
+                    });
+                }
+                if ($t.hasClass("fa-plus")) {
+                    instance.zoomIn();
+                }
+                if ($t.hasClass("fa-minus")) {
+                    instance.zoomOut();
+                }
+                if ($t.hasClass("fa-refresh")) {
+                    instance.resetZoom();
+                    instance.center();
+                }
+            };
+        }
+
+        $("#example2 i").off('click').on('click', callback(panZoom));
+
+        /* ===============================
+         * LOAD WARNA DENAH
+         * =============================== */
+        function loadDenahColor() {
+            var perum = '<?= $this->uri->segment(3) ?>';
 
             $.ajax({
-                url: "<?php echo base_url('index.php/home/allDenahColor/') ?>" + perum,
-                data: [],
+                url: "<?= base_url('index.php/home/allDenahColor/') ?>" + perum,
                 type: 'GET',
                 success: function(data) {
+                    if (!data || !data.results) return;
+
                     for (var i = 0; i < data.results.length; i++) {
-                        var path = data.results[i]
-                        $(`#${path.code}`).css('fill', path.color);
+                        var path = data.results[i];
+                        $('#' + path.code).css('fill', path.color);
                     }
                 }
             });
-        }, 2000);
+        }
 
-        // base_url dari PHP
+        // delay agar SVG benar-benar ter-load
+        setTimeout(loadDenahColor, 1000);
+
+        /* ===============================
+         * EVENT KLIK / TAP POLYGON & RECT
+         * =============================== */
         var base_url = "<?= base_url(); ?>";
 
-        // Event: saat polygon / rect diklik atau ditap
+        $(document).off('click touchstart pointerdown', '#svg polygon, #svg rect');
         $(document).on('click touchstart pointerdown', '#svg polygon, #svg rect', function(e) {
-            e.preventDefault(); // cegah conflict
-            var noKapling = $(this).attr('id');
+            e.preventDefault();
+
+            var noKapling = this.id;
             var idPerum = $('#data-site-plan').data('id_perum');
 
-            if (noKapling && idPerum) {
-                $.ajax({
-                    url: base_url + "Client/getDenahDetail",
-                    type: "POST",
-                    dataType: "json",
-                    data: {
-                        id_perum: idPerum,
-                        code: noKapling
-                    },
-                    success: function(res) {
-                        if (res.success) {
-                            let d = res.data;
+            if (!noKapling || !idPerum) return;
 
-                            // isi modal dengan fallback "-"
-                            $('#nama-perum').text(d.nama_perum || "-");
-                            $('#nama-cus').text((d.transaksi[0] && d.transaksi[0]
-                                .nama_cus) || "-");
-                            $('#no-wa').text((d.transaksi[0] && d.transaksi[0].no_wa) ||
-                                "-");
-                            $('#blok').text(d.code || "-");
-                            $('#type-unit').text(d.type_unit || "-");
+            $.ajax({
+                url: base_url + "Client/getDenahDetail",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    id_perum: idPerum,
+                    code: noKapling
+                },
+                success: function(res) {
+                    if (!res.success) {
+                        alert(res.message);
+                        return;
+                    }
 
-                            // status pembelian
-                            let statusPemb = d.status_pembayaran || "-";
-                            if (statusPemb === "KPR") {
-                                $('#status-pembelian').removeClass().addClass(
-                                    "badge bg-success").text("KPR");
-                            } else if (statusPemb === "CASH") {
-                                $('#status-pembelian').removeClass().addClass(
-                                    "badge bg-primary").text("CASH");
-                            } else if (statusPemb === "-") {
-                                $('#status-pembelian').removeClass().addClass(
-                                    "badge bg-secondary").text("-");
-                            } else {
-                                $('#status-pembelian').removeClass().addClass(
-                                    "badge bg-secondary").text(statusPemb);
-                            }
+                    let d = res.data;
 
-                            // isi tabel transaksi (jika kosong kasih 1 baris "-")
-                            let tbody = "";
-                            if (d.transaksi && d.transaksi.length > 0) {
-                                d.transaksi.forEach(function(tr) {
-                                    tbody += `
+                    // isi modal
+                    $('#nama-perum').text(d.nama_perum || "-");
+                    $('#nama-cus').text((d.transaksi?. [0]?.nama_cus) || "-");
+                    $('#no-wa').text((d.transaksi?. [0]?.no_wa) || "-");
+                    $('#blok').text(d.code || "-");
+                    $('#type-unit').text(d.type_unit || "-");
+
+                    // status pembelian
+                    let statusPemb = d.status_pembayaran || "-";
+                    let badgeClass = "badge bg-secondary";
+                    if (statusPemb === "KPR") badgeClass = "badge bg-success";
+                    if (statusPemb === "CASH") badgeClass = "badge bg-primary";
+
+                    $('#status-pembelian')
+                        .removeClass()
+                        .addClass(badgeClass)
+                        .text(statusPemb);
+
+                    // tabel transaksi
+                    let tbody = "";
+                    if (d.transaksi && d.transaksi.length) {
+                        d.transaksi.forEach(tr => {
+                            tbody += `
                                 <tr>
                                     <td>${tr.status_trans || "-"}</td>
                                     <td>${tr.tgl_trans || "-"}</td>
                                     <td>${tr.nominal ? "Rp. " + new Intl.NumberFormat('id-ID').format(tr.nominal) : "-"}</td>
                                     <td>${tr.tahap || "-"}</td>
-                                </tr>
-                            `;
-                                });
-                            } else {
-                                tbody = `
+                                </tr>`;
+                        });
+                    } else {
+                        tbody = `
                             <tr>
                                 <td colspan="4" class="text-center">-</td>
-                            </tr>
-                        `;
-                            }
-                            $("#tbody-transaksi").html(tbody);
+                            </tr>`;
+                    }
+                    $("#tbody-transaksi").html(tbody);
 
-                            // --- Hitung Nominal DP, DP Dibayar, Kekurangan ---
-                            let nominalDP = 0;
-                            let totalDPdibayar = 0;
+                    // hitung DP
+                    let nominalDP = 0,
+                        totalDPdibayar = 0;
+                    d.transaksi?.forEach(tr => {
+                        if (tr.status_trans === "DP") {
+                            totalDPdibayar += parseInt(tr.nominal) || 0;
+                            nominalDP = parseInt(tr.nominal_dp) || nominalDP;
+                        }
+                    });
 
-                            if (d.transaksi && d.transaksi.length > 0) {
-                                d.transaksi.forEach(tr => {
-                                    if (tr.status_trans === "DP") {
-                                        totalDPdibayar += parseInt(tr.nominal) || 0;
-                                        nominalDP = parseInt(tr.nominal_dp) ||
-                                            nominalDP;
-                                    }
-                                });
-                            }
+                    let sisaDP = nominalDP ? nominalDP - totalDPdibayar : 0;
+                    let formatRp = n => "Rp. " + new Intl.NumberFormat('id-ID').format(n ||
+                        0);
 
-                            let sisaDP = (nominalDP > 0 ? nominalDP - totalDPdibayar : 0);
-
-                            function formatRp(angka) {
-                                return "Rp. " + new Intl.NumberFormat('id-ID').format(
-                                    angka || 0);
-                            }
-
-                            let ringkasanHTML = `
+                    $("#ringkasan-dp").html(`
                         <table class="table table-bordered table-sm mt-2">
-                            <tr>
-                                <td class="fw-bold" style="width:150px;">Nominal DP</td>
-                                <td>${nominalDP > 0 ? formatRp(nominalDP) : "-"}</td>
-                            </tr>
-                            <tr>
-                                <td class="fw-bold">DP Dibayar</td>
-                                <td>${totalDPdibayar > 0 ? formatRp(totalDPdibayar) : "-"}</td>
-                            </tr>
-                            <tr>
-                                <td class="fw-bold">Kekurangan</td>
-                                <td>
-                                    ${sisaDP > 0
-                                        ? formatRp(sisaDP)
-                                        : (nominalDP > 0
-                                            ? '<span class="badge bg-success">LUNAS</span>'
-                                            : '-')}
-                                </td>
+                            <tr><td class="fw-bold">Nominal DP</td><td>${nominalDP ? formatRp(nominalDP) : "-"}</td></tr>
+                            <tr><td class="fw-bold">DP Dibayar</td><td>${totalDPdibayar ? formatRp(totalDPdibayar) : "-"}</td></tr>
+                            <tr><td class="fw-bold">Kekurangan</td>
+                                <td>${sisaDP > 0 ? formatRp(sisaDP) : (nominalDP ? '<span class="badge bg-success">LUNAS</span>' : '-')}</td>
                             </tr>
                         </table>
-                    `;
+                    `);
 
-                            $("#ringkasan-dp").html(ringkasanHTML);
+                    // marketing
+                    $('#marketing').text(d.transaksi?.length ? d.transaksi[d.transaksi
+                        .length - 1].user_admin : "-");
 
-                            // marketing dari transaksi terakhir
-                            if (d.transaksi && d.transaksi.length > 0) {
-                                $('#marketing').text(d.transaksi[d.transaksi.length - 1]
-                                    .user_admin || "-");
-                            } else {
-                                $('#marketing').text("-");
-                            }
+                    // progress
+                    let progress = d.progres_berkas ?? 0;
+                    $('#progres-berkas').css('width', progress + '%').attr('aria-valuenow',
+                        progress);
+                    $('#progres-text').text(progress + '%');
 
-                            // progress
-                            let progress = d.progres_berkas ?? 0;
-                            $('#progres-berkas')
-                                .css('width', progress + '%')
-                                .attr('aria-valuenow', progress);
-                            $('#progres-text').text(progress + '%');
-
-                            // tampilkan modal
-                            $('#tampilModal').modal('show');
-                        } else {
-                            alert(res.message);
-                        }
-                    },
-
-                });
-            }
+                    $('#tampilModal').modal('show');
+                }
+            });
         });
-
-
     });
 }
 </script>

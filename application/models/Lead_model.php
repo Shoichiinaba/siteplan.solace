@@ -8,30 +8,42 @@ class Lead_model extends CI_Model
         var $column_search = array('visit.nama', 'tanggal', 'no_tlp', 'sumber','perumahan.nama', 'keterangan', 'hasil_fu');
         var $order = array('id_visit' => 'asc');
 
-    private function _get_datatables_query($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing) {
+    // di dalam model (Lead_model.php)
+public function get_datatablesvisit($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing, $no_limit = false)
+{
+    // bangun query dasar (pakai function _get_datatables_query yang sudah ada)
+    $this->_get_datatables_query($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing);
 
+    // Jangan apply limit jika $no_limit = true
+    if (!$no_limit && isset($_POST['length']) && $_POST['length'] != -1) {
+        $this->db->limit($_POST['length'], $_POST['start']);
+    }
+
+    $query = $this->db->get();
+    return $query->result();
+}
+
+public function count_filteredvisit($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing)
+{
+    $this->_get_datatables_query($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing);
+    $query = $this->db->get();
+    return $query->num_rows();
+}
+
+// count_allvisit: hitung total (tanpa search), pastikan logika where sama seperti di _get_datatables_query
+public function count_allvisit($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing)
+{
+    // Buat query mirip bagian awal _get_datatables_query tapi TANPA LIKE search grouping
     if ($role == 'Admin') {
-
-        $this->db->select('visit.*, visit.nama AS nama_visit, perumahan.nama AS nama_perum, admin.nama AS nama_marketing');
         $this->db->from('visit');
         $this->db->join('perumahan', 'perumahan.id_perum = visit.unit');
         $this->db->join('admin', 'admin.id = visit.id_marketing');
-        $this->db->where('visit.kategori !=', 'Sudah Survey');
-        $this->db->where_not_in('visit.kategori', ['Sudah Survey', 'Tidak Prospek', 'Prospek', 'UTJ']);
-        $this->db->order_by('id_visit', 'desc');
+        $this->db->where_not_in('visit.kategori', ['Tidak Prospek', 'Prospek', 'UTJ']);
 
-        if ($fil_unit) {
-            $this->db->where('visit.unit', $fil_unit);
-        }
-        if ($fil_kategori !== '') {
-            $this->db->where('visit.kategori', $fil_kategori);
-        }
-        if ($fil_sumber !== '') {
-            $this->db->where('visit.sumber', $fil_sumber);
-        }
-        if ($fil_marketing !== '') {
-            $this->db->where('visit.id_marketing', $fil_marketing);
-        }
+        if ($fil_unit) $this->db->where('visit.unit', $fil_unit);
+        if ($fil_kategori !== '') $this->db->where('visit.kategori', $fil_kategori);
+        if ($fil_sumber !== '') $this->db->where('visit.sumber', $fil_sumber);
+        if ($fil_marketing !== '') $this->db->where('visit.id_marketing', $fil_marketing);
         if ($fil_daterange) {
             $dateRange = explode(' - ', $fil_daterange);
             $startDate = $dateRange[0];
@@ -40,50 +52,18 @@ class Lead_model extends CI_Model
             $this->db->where('visit.tanggal <=', $endDate);
         }
 
-            $i = 0;
-            foreach ($this->column_search as $item) {
-                if(@$_POST['search']['value']) {
-                    if($i===0) {
-                        $this->db->group_start();
-                        $this->db->like($item, $_POST['search']['value']);
-                    } else {
-                        $this->db->or_like($item, $_POST['search']['value']);
-                    }
-                    if(count($this->column_search) - 1 == $i)
-                        $this->db->group_end();
-                }
-                $i++;
-            }
-
-            if(isset($_POST['order'])) {
-                $this->db->order_by($this->column_order[$_POST['order']['0']['column']], $_POST['order']['0']['dir']);
-            }  else if(isset($this->order)) {
-                $order = $this->order;
-                $this->db->order_by(key($order), $order[key($order)]);
-            }
-
+        return $this->db->count_all_results();
     } else if ($role == 'Marketing') {
-
-        $this->db->select('visit.*, visit.nama AS nama_visit, perumahan.nama AS nama_perum');
         $this->db->from('visit');
         $this->db->join('marketing_perum', 'marketing_perum.id_perum_marketing = visit.unit');
         $this->db->join('perumahan', 'perumahan.id_perum = visit.unit');
         $this->db->where('marketing_perum.id_admin_marketing', $id);
         $this->db->where('visit.id_marketing', $id);
-        $this->db->where_not_in('visit.kategori', ['Sudah Survey', 'Tidak Prospek', 'Prospek', 'UTJ']);
-        $this->db->order_by('id_visit', 'desc');
+        $this->db->where_not_in('visit.kategori', ['Tidak Prospek', 'Prospek', 'UTJ']);
 
-
-
-        if ($fil_unit) {
-            $this->db->where('visit.unit', $fil_unit);
-        }
-        if ($fil_kategori !== '') {
-            $this->db->where('visit.kategori', $fil_kategori);
-        }
-        if ($fil_sumber !== '') {
-            $this->db->where('visit.sumber', $fil_sumber);
-        }
+        if ($fil_unit) $this->db->where('visit.unit', $fil_unit);
+        if ($fil_kategori !== '') $this->db->where('visit.kategori', $fil_kategori);
+        if ($fil_sumber !== '') $this->db->where('visit.sumber', $fil_sumber);
         if ($fil_daterange !== '') {
             $dateRange = explode(' - ', $fil_daterange);
             $startDate = $dateRange[0];
@@ -92,49 +72,12 @@ class Lead_model extends CI_Model
             $this->db->where('visit.tanggal <=', $endDate);
         }
 
-            $i = 0;
-            foreach ($this->column_search as $item) {
-                if(@$_POST['search']['value']) {
-                    if($i===0) {
-                        $this->db->group_start();
-                        $this->db->like($item, $_POST['search']['value']);
-                    } else {
-                        $this->db->or_like($item, $_POST['search']['value']);
-                    }
-                    if(count($this->column_search) - 1 == $i)
-                        $this->db->group_end();
-                }
-                $i++;
-            }
-
-            if(isset($_POST['order'])) {
-                $this->db->order_by($this->column_order[$_POST['order']['0']['column']], $_POST['order']['0']['dir']);
-            }  else if(isset($this->order)) {
-                $order = $this->order;
-                $this->db->order_by(key($order), $order[key($order)]);
-            }
-        }
-    }
-
-    function get_datatablesvisit($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing) {
-        $this->_get_datatables_query($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing);
-        if(@$_POST['length'] != -1)
-        $this->db->limit(@$_POST['length'], @$_POST['start']);
-        $query = $this->db->get();
-        return $query->result();
-    }
-
-    function count_filteredvisit($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing) {
-        $this->_get_datatables_query($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing);
-        $query = $this->db->get();
-        return $query->num_rows();
-    }
-
-    function count_allvisit($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing) {
-        $this->_get_datatables_query($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing);
         return $this->db->count_all_results();
     }
-    // end datatables
+
+    return 0;
+}
+
 
     function save_data($data) {
         return $this->db->insert('visit', $data);

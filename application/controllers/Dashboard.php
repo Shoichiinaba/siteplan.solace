@@ -28,24 +28,23 @@ class Dashboard extends AUTH_Controller
 
     public function index()
     {
-        $id = $this->session->userdata('userdata')->id;
-        $role = $this->session->userdata('userdata')->role;
+        $id                         = $this->session->userdata('userdata')->id;
+        $role                       = $this->session->userdata('userdata')->role;
         $data['perumahan']          = $this->M_admin->m_perumahan($id, $role);
         $data['area_siteplan']      = $this->M_admin->m_area_siteplan();
         $data['bread']              = 'Dashboard';
-        $data['jum_ready']             = $this->Dashboard_Model->jumlah_ready($role, $id);
-        $data['jum_dipesan']         = $this->Dashboard_Model->jumlah_dipesan($role, $id);
-        $data['jum_sold']             = $this->Dashboard_Model->jumlah_sold($role, $id);
-        $data['jum_null']             = $this->Dashboard_Model->all_DP($role, $id);
+        $data['jum_ready']          = $this->Dashboard_Model->jumlah_ready($role, $id);
+        $data['jum_dipesan']        = $this->Dashboard_Model->jumlah_dipesan($role, $id);
+        $data['jum_sold']           = $this->Dashboard_Model->jumlah_sold($role, $id);
+        $data['jum_null']           = $this->Dashboard_Model->all_DP($role, $id);
         $data['tolp_ready']         = $this->Dashboard_Model->tooltip_ready($role, $id);
-        $data['tolp_UTJ']             = $this->Dashboard_Model->tooltip_UTJ($role, $id);
-        $data['tolp_DP']             = $this->Dashboard_Model->tooltip_DP($role, $id);
-        $data['tolp_Sold']             = $this->Dashboard_Model->tooltip_sold($role, $id);
+        $data['tolp_UTJ']           = $this->Dashboard_Model->tooltip_UTJ($role, $id);
+        $data['tolp_DP']            = $this->Dashboard_Model->tooltip_DP($role, $id);
+        $data['tolp_Sold']          = $this->Dashboard_Model->tooltip_sold($role, $id);
         $data['content']            = 'page/Dashboard_v';
-        $data['ambil']                 = $this->userdata;
+        $data['ambil']              = $this->userdata;
         $data['ChartData']          = $this->Dashboard_Model->getChartData($role, $id);
         $data['transaksi']          = $this->Dashboard_Model->getTransaksiByBulan();
-        // $data['data_deadline']      = $this->Dashboard_Model->data_deadline($role, $id);
 
         $this->load->view($this->template, $data);
     }
@@ -58,13 +57,13 @@ class Dashboard extends AUTH_Controller
         $role = $this->session->userdata('userdata')->role;
         $data['perumahan']          = $this->M_admin->m_perumahan($id, $role);
         $data['area_siteplan']      = $this->M_admin->m_area_siteplan();
-        $data['jum_UTJ']             = $this->Dashboard_Model->jumlah_UTJ($perum);
+        $data['jum_UTJ']            = $this->Dashboard_Model->jumlah_UTJ($perum);
         $data['jum_DP']             = $this->Dashboard_Model->jumlah_DP($perum);
-        $data['jum_sold']             = $this->Dashboard_Model->jum_sold($perum);
-        $data['jum_ready']             = $this->Dashboard_Model->jum_ready($perum);
+        $data['jum_sold']           = $this->Dashboard_Model->jum_sold($perum);
+        $data['jum_ready']          = $this->Dashboard_Model->jum_ready($perum);
         $data['bread']              = 'Dashboard/ Detail';
         $data['content']            = 'page/Dashboard_det';
-        $data['ambil']                 = $this->userdata;
+        $data['ambil']              = $this->userdata;
         $data['transaksi_det']      = $this->Dashboard_Model->getperumByBulan($perum);
         $data['Rmh_ready']          = $this->Dashboard_Model->readyByperum($perum);
         $this->load->view($this->template, $data);
@@ -112,14 +111,38 @@ class Dashboard extends AUTH_Controller
 
         if ($status) {
             if ($status == 'UTJ' || $status == 'DP') {
-                $id_denahs = [''];
-                $sql = "SELECT *FROM transaksi, denahs WHERE transaksi.id_trans_denahs = denahs.id_denahs AND denahs.id_perum = '$id_perum' AND status_trans = '$status' ";
+                $id_denahs = [];
+
+                // Ambil semua unit berdasarkan perumahan
+                $sql = "SELECT transaksi.id_trans_denahs, transaksi.status_trans
+                        FROM transaksi
+                        JOIN denahs ON denahs.id_denahs = transaksi.id_trans_denahs
+                        WHERE denahs.id_perum = '$id_perum'";
                 $query = $this->db->query($sql);
-                if ($query->num_rows() > 0) {
-                    foreach ($query->result() as $row) {
-                        $id_denahs[] = $row->id_denahs;
+                $transData = $query->result();
+
+                // Kelompokkan status per id_denahs
+                $grouped = [];
+                foreach ($transData as $row) {
+                    $grouped[$row->id_trans_denahs][] = $row->status_trans;
+                }
+
+                foreach ($grouped as $id_denah => $statusList) {
+                    if ($status == 'DP') {
+                        if (in_array('DP', $statusList) && !in_array('Sold Out', $statusList)) {
+                            $id_denahs[] = $id_denah;
+                        }
+                    } elseif ($status == 'UTJ') {
+                        if (in_array('UTJ', $statusList) && !in_array('DP', $statusList) && !in_array('Sold Out', $statusList)) {
+                            $id_denahs[] = $id_denah;
+                        }
                     }
                 }
+
+                if (empty($id_denahs)) {
+                    $id_denahs = [0];
+                }
+
                 $model = $model->whereIn('id_denahs', $id_denahs);
             } else {
                 $model = $model->where('type', $status);
@@ -176,16 +199,17 @@ class Dashboard extends AUTH_Controller
             $count = [];
             $performa = [];
 
+            // Ambil transaksi per denah
             $sql = "SELECT * FROM transaksi WHERE id_trans_denahs = $id_denahs";
             $query = $this->db->query($sql);
             if ($query->num_rows() > 0) {
                 $tgl_UTJ = null;
                 foreach ($query->result() as $row) {
                     if ($row->status_trans == 'UTJ') {
-                        $data_trans[] = '<span class="border-transaksi">' . $row->status_trans . '</span>';
+                        $data_trans[] = '<span class="border-transaksi me-1">' . $row->status_trans . '</span>';
                         $tgl_UTJ = strtotime(str_replace('/', '-', $row->tgl_trans));
                     } elseif ($row->status_trans == 'DP') {
-                        $data_trans[] = '<span class="border-transaksi">' . $row->status_trans . '</span>';
+                        $data_trans[] = '<span class="border-transaksi me-1">' . $row->status_trans . '</span>';
                     } elseif ($row->status_trans == 'Sold Out') {
                         $tgl_Sold = strtotime(str_replace('/', '-', $row->tgl_trans));
                         $performa = '<span class="badge bg-gradient-primary">' . floor(($tgl_Sold - $tgl_UTJ) / (60 * 60 * 24)) . '  Hari </span>';
@@ -195,7 +219,6 @@ class Dashboard extends AUTH_Controller
                 if ($row->status_trans == 'Sold Out') {
                     $count[] = '<span class="bg-dur-sold-out">' . $row->status_trans . '</span>';
                 } else {
-
                     $tgl = preg_replace("![^a-z0-9]+!i", "-", $row->tgl_trans);
                     date_default_timezone_set('Asia/Jakarta');
                     $awal  = date_create('' . $tgl . '');
@@ -212,7 +235,25 @@ class Dashboard extends AUTH_Controller
                 }
             }
 
-            $data['transaction'] = $data_trans;
+            // 🔹 Ambil status pembayaran dari denahs
+            $status_pembayaran = '';
+            if (!empty($result->status_pembayaran)) {
+                if ($result->status_pembayaran == 'cash') {
+                    $status_pembayaran = '<span class="badge bg-gradient-success position-absolute end-0 top-0 me-2 mt-1">Cash</span>';
+                } elseif ($result->status_pembayaran == 'kpr-kom') {
+                    $status_pembayaran = '<span class="badge bg-gradient-info position-absolute end-0 top-0 me-2 mt-1">KPR</span>';
+                }
+            }
+
+            // 🔹 Bungkus kiri-kanan (UTJ/DP kiri, Cash/KPR kanan)
+            $data['transaction'] = '
+            <div class="position-relative d-flex align-items-center">
+                <div class="d-flex flex-wrap gap-1">
+                    ' . implode('', $data_trans) . '
+                </div>
+                ' . $status_pembayaran . '
+            </div>';
+
             $data['duration'] = $count;
             $data['performance'] = $performa;
             $data_arr[] = $data;
@@ -235,13 +276,11 @@ class Dashboard extends AUTH_Controller
         $this->load->model('dashboard_Model');
         $id = $this->session->userdata('userdata')->id;
         $role = $this->session->userdata('userdata')->role;
-        // $limit = $this->input->post('limit');
-        // $start = $this->input->post('start');
         $data = $this->Dashboard_Model->data_deadline($role, $id);
 
         $count = 0;
         $utjDeadlines = [];
-      
+
         if (!empty($data)) {
             foreach ($data as $row) {
                 if ($row->type == 'Dipesan' && $row->status_trans == 'UTJ') {
@@ -260,7 +299,7 @@ class Dashboard extends AUTH_Controller
                     }
                 }
             }
-          
+
 
             usort($utjDeadlines, function ($a, $b) {
                 return $b['days'] - $a['days'];
@@ -301,7 +340,7 @@ class Dashboard extends AUTH_Controller
                 if ($row->status_trans == 'UTJ' || $row->status_trans == 'DP') {
                     $data_trans[] = '<span class="border-transaksi">' . $row->status_trans . '</span>';
                 }
-              
+
                 if (!empty($data_trans)) {
                     foreach ($data_trans as $data) {
                         $output .= $data;
@@ -317,23 +356,11 @@ class Dashboard extends AUTH_Controller
                 $output .= '</tr>';
 
                 $count++;
-                // if ($count >= $limit) {
-                //     break;
-                // }
+
             }
 
-            // $output .= '</tbody>';
         }
-
-        // if ($count === 0) {
-        //     $output .= '<tbody>';
-        //     $output .= '<tr>';
-        //     $output .= '<td colspan="5s">Tidak ada data yang mendekati deadline...</td>';
-        //     $output .= '</tr>';
-        //     $output .= '</tbody>';
-        // }
 
         echo $output;
     }
 }
-

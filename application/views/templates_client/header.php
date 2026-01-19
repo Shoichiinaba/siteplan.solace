@@ -17,10 +17,17 @@
     <link id="pagestyle" href="<?= base_url(); ?>assets_adm/css/soft-ui-dashboard.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+
     <link rel="stylesheet" href="<?php echo base_url('assets/css/datatables.min.css') ?>">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- SVG Pan Zoom core -->
+    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <style>
@@ -65,14 +72,17 @@
 
     }
 
-    div.keterangan {
-        text-align: center;
-        margin-bottom: 1px;
-    }
+    .keterangan-fixed {
+        position: absolute;
+        bottom: -24px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
 
-    div.keterangan span {
-        margin-left: 4px;
-        margin-bottom: 3px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     #svg-container {
@@ -118,8 +128,11 @@
         }
     }
     </style>
+    <!-- svg-pan-zoom core -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/svg-pan-zoom/3.6.1/svg-pan-zoom.min.js"></script> -->
 
-    <script type="text/javascript"
-        src="https://rawgit.com/DanielHoffmann/jquery-svg-pan-zoom/master/compiled/jquery.svg.pan.zoom.js"></script>
+    <!-- jQuery wrapper -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/jquery-svg-pan-zoom@3.6.1/jquery.svg.pan.zoom.min.js"></script> -->
+
 
 </head>

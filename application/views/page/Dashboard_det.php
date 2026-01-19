@@ -206,41 +206,46 @@
 <!-- js script -->
 <script>
 // grafik transaksi by perumahan by bulan
-
 var transaksi = <?php echo json_encode($transaksi_det); ?>;
 var groupedData = {};
+
+// kelompokkan data per bulan dan status_trans
 transaksi.forEach(function(item) {
     var bulan = item.bulan;
-    if (!groupedData[bulan]) {
-        groupedData[bulan] = {};
-    }
-    if (!groupedData[bulan][item.status_trans]) {
-        groupedData[bulan][item.status_trans] = 0;
-    }
+    if (!groupedData[bulan]) groupedData[bulan] = {};
+    if (!groupedData[bulan][item.status_trans]) groupedData[bulan][item.status_trans] = 0;
     groupedData[bulan][item.status_trans] += parseInt(item.jumlah);
 });
 
-// Membuat array bulan dan array data untuk setiap status_trans
-var bulanArray = Object.keys(groupedData);
+// urutan bulan manual biar tidak acak
+var bulanUrut = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+// ambil hanya bulan yang ada di data, lalu urut sesuai urutan waktu
+var bulanArray = Object.keys(groupedData).sort(function(a, b) {
+    return bulanUrut.indexOf(a) - bulanUrut.indexOf(b);
+});
+
+// siapkan data untuk setiap status transaksi
 var datasets = [];
 var statusTransArray = Object.keys(transaksi.reduce(function(result, item) {
     result[item.status_trans] = true;
     return result;
 }, {}));
+
 statusTransArray.forEach(function(statusTrans) {
     var data = [];
-    // Tambahkan variabel warna latar belakang
     var backgroundColor = '';
-    if (statusTrans === 'UTJ') {
-        backgroundColor = 'red';
-    } else if (statusTrans === 'DP') {
-        backgroundColor = 'green';
-    } else if (statusTrans === 'Sold Out') {
-        backgroundColor = 'yellow';
-    }
+    if (statusTrans === 'UTJ') backgroundColor = 'red';
+    else if (statusTrans === 'DP') backgroundColor = 'green';
+    else if (statusTrans === 'Sold Out') backgroundColor = 'yellow';
+
     bulanArray.forEach(function(bulan) {
         data.push(groupedData[bulan][statusTrans] || 0);
     });
+
     datasets.push({
         label: statusTrans,
         data: data,
@@ -248,7 +253,7 @@ statusTransArray.forEach(function(statusTrans) {
     });
 });
 
-// Membuat grafik dengan Chart.js
+// buat grafik Chart.js
 var ctx = document.getElementById('myChart').getContext('2d');
 new Chart(ctx, {
     type: 'bar',
@@ -261,7 +266,14 @@ new Chart(ctx, {
         scales: {
             yAxes: [{
                 ticks: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    // 💡 tampilkan bilangan bulat saja (tanpa koma)
+                    callback: function(value) {
+                        if (Number.isInteger(value)) {
+                            return value;
+                        }
+                    },
+                    stepSize: 1 // jarak antar angka di sumbu Y
                 }
             }]
         }
