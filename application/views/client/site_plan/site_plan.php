@@ -486,7 +486,7 @@ function load_query_map() {
 
                     $("#ringkasan-dp").html(`
                         <table class="table table-bordered table-sm mt-2">
-                            <tr><td class="fw-bold">Nominal DP</td><td>${nominalDP ? formatRp(nominalDP) : "-"}</td></tr>
+                            <tr><td class="fw-bold">Harga UNIt / Nominal DP</td><td>${nominalDP ? formatRp(nominalDP) : "-"}</td></tr>
                             <tr><td class="fw-bold">DP Dibayar</td><td>${totalDPdibayar ? formatRp(totalDPdibayar) : "-"}</td></tr>
                             <tr><td class="fw-bold">Kekurangan</td>
                                 <td>${sisaDP > 0 ? formatRp(sisaDP) : (nominalDP ? '<span class="badge bg-success">LUNAS</span>' : '-')}</td>
