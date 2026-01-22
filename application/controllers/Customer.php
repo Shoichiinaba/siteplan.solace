@@ -300,7 +300,7 @@ class Customer extends AUTH_Controller
             'hasil_fu' => $this->input->post('hasil_fu')
         );
 
-        $result = $this->Visit_model->save_data($data);
+        $result = $this->Lead_model->save_lead($data);
 
         if ($result) {
             $response = array('status' => 'success', 'message' => 'Data berhasil disimpan.');

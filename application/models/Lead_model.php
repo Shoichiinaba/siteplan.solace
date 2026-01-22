@@ -209,6 +209,11 @@ class Lead_model extends CI_Model
         return $this->db->count_all_results();
     }
 
+    function save_lead($data)
+    {
+        return $this->db->insert('visit', $data);
+    }
+
     function update_data($table,$data,$id)
 	{
 		$this->db->where('id_visit', $id);
