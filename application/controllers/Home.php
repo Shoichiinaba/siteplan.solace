@@ -1222,23 +1222,30 @@ class Home extends CI_Controller
             echo '<input id="id-upload" type="text" hidden  value="">';
         }
         echo '<script>
-                // $(document).ready(function() {
-    // console.log($(".ktp").data("text"));
-                    $(".pdf").click(function(e) {
-                        // alert("' . base_url('upload') . '/doc/" + $(this).data("pdf") + "&embedded=true")
-                        // alert($(this).data("pdf") + "&embedded=true")
-                        $("#view-pdf").attr("src", "https://docs.google.com/viewer?url=' . base_url('upload') . '/doc/" + $(this).data("pdf") + "&embedded=true")
-                        $("#link-down-pdf").attr("href", "' . base_url('upload') . '/doc/" + $(this).data("pdf"));
-                        $("#link-down-pdf").attr("download", $(this).data("pdf"));
-                        $("#preview-pdf").removeAttr("hidden", true);
+                    $(".pdf").off("click").on("click", function(e) {
+                        e.preventDefault();
+
+                        let file = $(this).data("pdf");
+                        let url  = "' . base_url('upload/doc/') . '" + file;
+
+                        // tampilkan preview
+                        $("#preview-pdf").removeAttr("hidden");
+
+                        // set iframe PDF
+                        $("#view-pdf").attr("src", url);
+
+                        // tombol download
+                        $("#link-down-pdf")
+                            .attr("href", url)
+                            .attr("download", file);
+
+                        // set hidden input
                         $("#id-upload").val($(this).data("id-upload"));
                         $("#flied").val($(this).data("flied"));
-                        $("#file-doc").val($(this).data("pdf"));
+                        $("#file-doc").val(file);
                     });
+                </script>';
 
-
-                // });
-            </script>';
     }
 
     function upload_document()

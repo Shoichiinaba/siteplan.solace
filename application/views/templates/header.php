@@ -92,7 +92,7 @@
     /* ===== CONTROL PANEL ===== */
     #example2 {
         position: relative;
-        z-index: 99999;
+        /* z-index: 99999; */
         /* PENTING */
         text-align: center;
     }

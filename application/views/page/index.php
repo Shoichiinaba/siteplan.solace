@@ -57,17 +57,18 @@
     border: 2px solid #ff000030 !important;
 }
 
+/* inner wrapper: make responsive */
+.responsive-wrapper {
+    position: relative;
+    height: 0;
+}
+
 #Iframe-Master-CC-and-Rs {
     max-width: 812px;
     max-height: 100%;
     overflow: hidden;
 }
 
-/* inner wrapper: make responsive */
-.responsive-wrapper {
-    position: relative;
-    height: 0;
-}
 
 .responsive-wrapper iframe {
     position: absolute;
@@ -447,12 +448,14 @@ sup {
                             2mb</span>
                     </div>
                 </div>
+
                 <div id="add-document" class="row">
                     <div class="col">
                         <button type="button" id="btn-add-document" class="btn bg-gradient-default btn-sm col-12">Upload
                             document</button>
                     </div>
                 </div>
+
                 <div id="action-upload" class="row" hidden>
                     <div class="col-6">
                         <a href="javascript:;" id="btn-cencel-document" class="btn btn-danger btn-lg btn-sm"
@@ -612,6 +615,7 @@ var html_kpr_komersil = '<option value="0">Pilih Document</option>' +
     '<option value="blanko">Blanko</option>';
 load_data_kapling();
 filter_tgl();
+
 $(document).ready(function() {
     $('.btn-modal-document').click(function() {
         cencel_upload_document();
@@ -800,8 +804,6 @@ $(document).ready(function() {
             $('#btn-simpan-trans').val('action');
         }
     });
-
-
 });
 
 $('#btn-simpan-trans').click(function() {
@@ -863,6 +865,7 @@ $('#btn-save-document').click(function() {
     }
 
 });
+
 $('#btn-cencel-document').click(function() {
     cencel_upload_document();
     $(this).addClass('active');
@@ -923,6 +926,18 @@ function close_preview_pdf() {
     $("#flied").val('');
     $("#file-doc").val('');
 }
+
+$('#btn-add-document').on('click', function() {
+    // tampilkan form upload
+    $('#form-document').removeAttr('hidden');
+
+    // tampilkan tombol save & cancel
+    $('#action-upload').removeAttr('hidden');
+
+    // sembunyikan tombol upload
+    $('#add-document').attr('hidden', true);
+});
+
 
 function upload_document() {
     var confirmalert = confirm("Apakah anda yakin untuk upload document ini ?");
@@ -1071,7 +1086,6 @@ function save_change_denah() {
         }
     });
 }
-
 
 function load_data_kapling() {
     if ($.fn.DataTable.isDataTable('#list-selatan')) {
