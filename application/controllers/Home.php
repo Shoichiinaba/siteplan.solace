@@ -1495,7 +1495,7 @@ class Home extends CI_Controller
             // --- Nominal DP Utama ---
             $nominal_dp = $row->nominal_dp;
             echo '<tr class="tr">';
-            echo '<td style="background: blanchedalmond;">Harga Unit</td>';
+            echo '<td style="background: blanchedalmond;">Harga Unit / DP</td>';
             echo '<td colspan="6" style="background: beige;" > : ' . $format_rp($row->nominal_dp) . '</td>';
             echo '<td class="td-nominal-dp" hidden>' . $row->nominal_dp . '</td>';
             echo '</tr>';
