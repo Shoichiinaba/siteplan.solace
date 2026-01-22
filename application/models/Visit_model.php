@@ -134,14 +134,10 @@ class Visit_model extends CI_Model
     }
     // end datatables
 
-    function save_data($data) {
-        return $this->db->insert('visit', $data);
-    }
-
-
-    function update_data($table,$data)
+    function update_data($table,$data,$id)
 	{
-		return $this->db->insert($table, $data);
+		$this->db->where('id_visit', $id);
+		return $this->db->update($table, $data);
     }
 
     function update_denah($table, $data, $id_denahs)

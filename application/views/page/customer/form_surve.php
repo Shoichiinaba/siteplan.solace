@@ -310,7 +310,7 @@ textarea:focus+label {
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form id="ubah-survey" action="<?= base_url('Customer/edit_data'); ?>" method="post">
+            <form id="ubah-survey" action="<?= base_url('Customer/edit_kunjungan'); ?>" method="post">
                 <div class="modal-body">
                     <div class="row mb-3">
                         <div class="col-md-6 mb-2">
@@ -420,9 +420,9 @@ textarea:focus+label {
                                     </div>
                                     <div class="col-md-4 mt-2 ml-0">
                                         <div class="input-wrapper">
-                                        <input type="text" id="nominal" name="nominal" class="col-lg-12" required>
-                                        <label class="label-in">Nominal</label>
-                                    </div>
+                                            <input type="text" id="nominal" name="nominal" class="col-lg-12" required>
+                                            <label class="label-in">Nominal</label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

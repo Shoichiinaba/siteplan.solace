@@ -347,7 +347,7 @@ sup {
                             </div>
                         </div>
                         <div id="in-nominal-dp" class="col-lg-3" hidden>
-                            <label for="nominal-dp" id="label-nominal-dp" class="form-label">Nominal DP</label>
+                            <label for="nominal-dp" id="label-nominal-dp" class="form-label">Harga Unit</label>
                             <div class="form-group mb-1">
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="ni ni-money-coins"></i></span>
@@ -713,7 +713,7 @@ function updateDPfield() {
 
         if (window.totalDPdibayar == 0) {
             // Belum ada DP
-            $('#label-nominal-dp').text('Nominal DP');
+            $('#label-nominal-dp').text('Harga Unit');
             $('#nominal-dp').val('').prop('readonly', false).attr('type', 'number');
 
             // Tampilkan input Nominal Dibayar, isi default = Nominal DP

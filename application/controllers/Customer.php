@@ -109,109 +109,106 @@ class Customer extends AUTH_Controller
         }
     }
 
- function get_customer_lead() {
-    $role = $this->session->userdata('userdata')->role;
-    $id = $this->session->userdata('userdata')->id;
-    $fil_unit = $this->input->post('fil_unit');
-    $fil_kategori = $this->input->post('fil_kategori');
-    $fil_sumber = $this->input->post('fil_sumber');
-    $fil_daterange = $this->input->post('fil_daterange');
-    $fil_marketing = $this->input->post('fil_marketing');
+    function get_customer_lead() {
+        $role = $this->session->userdata('userdata')->role;
+        $id = $this->session->userdata('userdata')->id;
+        $fil_unit = $this->input->post('fil_unit');
+        $fil_kategori = $this->input->post('fil_kategori');
+        $fil_sumber = $this->input->post('fil_sumber');
+        $fil_daterange = $this->input->post('fil_daterange');
+        $fil_marketing = $this->input->post('fil_marketing');
 
-    // ambil SEMUA baris (tanpa pagination) agar grouping/filter di PHP bekerja terhadap seluruh set
-    $list = $this->Lead_model->get_datatablesvisit(
-        $role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing, true
-    );
+        // ambil SEMUA baris (tanpa pagination) agar grouping/filter di PHP bekerja terhadap seluruh set
+        $list = $this->Lead_model->get_datatableslead($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing, false);
 
 
-    // 1️⃣ Kelompokkan berdasarkan nama
-    $grouped = [];
-    foreach ($list as $cus) {
-        $key = strtolower(trim($cus->nama_visit));
-        if (!isset($grouped[$key])) {
-            $grouped[$key] = [];
-        }
-        $grouped[$key][] = $cus;
-    }
-
-    // 2️⃣ Filter logika: jika ada kategori "Sudah Survey" → skip nama tsb
-    $filtered = [];
-    foreach ($grouped as $nama => $rows) {
-        $hasSudahSurvey = false;
-
-        foreach ($rows as $r) {
-
-            // Normalisasi kategori: hilangkan karakter tak terlihat dan buat lowercase
-            $kategori = strtolower($r->kategori ?? '');
-            $kategori = preg_replace('/[\x00-\x1F\x7F\xA0]/u', '', $kategori);
-            $kategori = trim(preg_replace('/\s+/', ' ', $kategori)); // ubah semua spasi jadi 1 spasi
-
-            // Gunakan "contains" agar lebih toleran
-            if (strpos($kategori, 'sudah survey') !== false) {
-                $hasSudahSurvey = true;
-                break;
+        // 1️⃣ Kelompokkan berdasarkan nama
+        $grouped = [];
+        foreach ($list as $cus) {
+            $key = strtolower(trim($cus->nama_visit));
+            if (!isset($grouped[$key])) {
+                $grouped[$key] = [];
             }
+            $grouped[$key][] = $cus;
         }
 
-        // Jika ada data "Sudah Survey", lewati semua nama ini
-        if ($hasSudahSurvey) continue;
+        // 2️⃣ Filter logika: jika ada kategori "Sudah Survey" → skip nama tsb
+        $filtered = [];
+        foreach ($grouped as $nama => $rows) {
+            $hasSudahSurvey = false;
 
-        // Ambil id_visit terbesar (data terakhir)
-        usort($rows, fn($a, $b) => (int)$b->id_visit <=> (int)$a->id_visit);
-        $filtered[] = $rows[0];
+            foreach ($rows as $r) {
+
+                // Normalisasi kategori: hilangkan karakter tak terlihat dan buat lowercase
+                $kategori = strtolower($r->kategori ?? '');
+                $kategori = preg_replace('/[\x00-\x1F\x7F\xA0]/u', '', $kategori);
+                $kategori = trim(preg_replace('/\s+/', ' ', $kategori)); // ubah semua spasi jadi 1 spasi
+
+                // Gunakan "contains" agar lebih toleran
+                if (strpos($kategori, 'sudah survey') !== false) {
+                    $hasSudahSurvey = true;
+                    break;
+                }
+            }
+
+            // Jika ada data "Sudah Survey", lewati semua nama ini
+            if ($hasSudahSurvey) continue;
+
+            // Ambil id_visit terbesar (data terakhir)
+            usort($rows, fn($a, $b) => (int)$b->id_visit <=> (int)$a->id_visit);
+            $filtered[] = $rows[0];
+        }
+
+        // 3️⃣ Bangun data untuk output
+        $data = [];
+        $no = @$_POST['start'];
+        foreach ($filtered as $cus) {
+            $no++;
+
+            $text = 'Halo Kak ' . $cus->nama_visit . ', Mengenai Hasil ' . $cus->hasil_fu .
+                    ', Pada Tanggal ' . $cus->tanggal .
+                    ', Apakah ada rencana lagi untuk Survey?';
+            $wa = 'https://api.whatsapp.com/send?phone=62' . $cus->no_tlp . '&text=' . rawurlencode($text);
+            $whatsappBtn = '<a href="' . $wa . '" class="btn bg-gradient-success btn-xs rounded-4" target="_blank"><i class="fa fa-whatsapp"></i></a>';
+
+            $editBtn = '&nbsp;<button type="button" class="btn bg-gradient-info btn-xs rounded-4 btn-edit"
+                data-bs-toggle="modal" data-bs-target="#edit-data"
+                data-id="' . $cus->id_visit . '"
+                data-nama="' . htmlentities($cus->nama_visit) . '"
+                data-tanggal="' . $cus->tanggal . '"
+                data-no_tlp="' . $cus->no_tlp . '"
+                data-unit="' . $cus->unit . '"
+                data-kategori="' . $cus->kategori . '"
+                data-keterangan="' . $cus->keterangan . '"
+                data-sumber="' . $cus->sumber . '"
+                data-hasil_fu="' . $cus->hasil_fu . '"
+                onclick="sendUnitToController(\'' . $cus->unit . '\')"><i class="fa fa-pencil"></i></button>';
+
+            $row = [];
+            $row[] = $no . '.';
+            if ($role !== 'Marketing') $row[] = $cus->nama_marketing;
+            $row[] = $cus->nama_visit;
+            $row[] = $cus->tanggal;
+            $row[] = $cus->no_tlp;
+            $row[] = $cus->nama_perum;
+            $row[] = $cus->kategori;
+            $row[] = $cus->keterangan;
+            $row[] = $cus->sumber;
+            $row[] = $cus->hasil_fu;
+            $row[] = $whatsappBtn . $editBtn;
+            $data[] = $row;
+        }
+
+        // 4️⃣ Output ke DataTables
+        $output = [
+            "draw" => @$_POST['draw'],
+            "recordsTotal" => $this->Lead_model->count_alllead($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing),
+            "recordsFiltered" => $this->Lead_model->count_filteredlead($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing),
+            "data" => $data
+        ];
+
+        echo json_encode($output);
     }
-
-    // 3️⃣ Bangun data untuk output
-    $data = [];
-    $no = @$_POST['start'];
-    foreach ($filtered as $cus) {
-        $no++;
-
-        $text = 'Halo Kak ' . $cus->nama_visit . ', Mengenai Hasil ' . $cus->hasil_fu .
-                ', Pada Tanggal ' . $cus->tanggal .
-                ', Apakah ada rencana lagi untuk Survey?';
-        $wa = 'https://api.whatsapp.com/send?phone=62' . $cus->no_tlp . '&text=' . rawurlencode($text);
-        $whatsappBtn = '<a href="' . $wa . '" class="btn bg-gradient-success btn-xs rounded-4" target="_blank"><i class="fa fa-whatsapp"></i></a>';
-
-        $editBtn = '&nbsp;<button type="button" class="btn bg-gradient-info btn-xs rounded-4 btn-edit"
-            data-bs-toggle="modal" data-bs-target="#edit-data"
-            data-id="' . $cus->id_visit . '"
-            data-nama="' . htmlentities($cus->nama_visit) . '"
-            data-tanggal="' . $cus->tanggal . '"
-            data-no_tlp="' . $cus->no_tlp . '"
-            data-unit="' . $cus->unit . '"
-            data-kategori="' . $cus->kategori . '"
-            data-keterangan="' . $cus->keterangan . '"
-            data-sumber="' . $cus->sumber . '"
-            data-hasil_fu="' . $cus->hasil_fu . '"
-            onclick="sendUnitToController(\'' . $cus->unit . '\')"><i class="fa fa-pencil"></i></button>';
-
-        $row = [];
-        $row[] = $no . '.';
-        if ($role !== 'Marketing') $row[] = $cus->nama_marketing;
-        $row[] = $cus->nama_visit;
-        $row[] = $cus->tanggal;
-        $row[] = $cus->no_tlp;
-        $row[] = $cus->nama_perum;
-        $row[] = $cus->kategori;
-        $row[] = $cus->keterangan;
-        $row[] = $cus->sumber;
-        $row[] = $cus->hasil_fu;
-        $row[] = $whatsappBtn . $editBtn;
-        $data[] = $row;
-    }
-
-    // 4️⃣ Output ke DataTables
-    $output = [
-        "draw" => @$_POST['draw'],
-        "recordsTotal" => $this->Visit_model->count_allvisit($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing),
-        "recordsFiltered" => $this->Visit_model->count_filteredvisit($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing),
-        "data" => $data
-    ];
-
-    echo json_encode($output);
-}
-
 
     function get_customer_visit() {
         $role = $this->session->userdata('userdata')->role;
@@ -317,6 +314,51 @@ class Customer extends AUTH_Controller
     public function edit_data()
     {
         $id = $this->input->post('id');
+
+        if (empty($id)) {
+            echo json_encode([
+                'status' => false,
+                'message' => 'ID tidak valid. Data tidak dapat diperbarui.'
+            ]);
+            return;
+        }
+
+        $data = [
+            'id_marketing' => $this->input->post('id_marketing'),
+            'nama'        => $this->input->post('nama'),
+            'tanggal'     => $this->input->post('tanggal'),
+            'no_tlp'      => $this->input->post('no_tlp'),
+            'unit'        => $this->input->post('unit'),
+            'kategori'    => $this->input->post('kategori'),
+            'keterangan'  => $this->input->post('keterangan'),
+            'sumber'      => $this->input->post('sumber'),
+            'hasil_fu'    => $this->input->post('hasil_fu')
+        ];
+
+        $update_status = $this->Lead_model->update_data('visit', $data, $id);
+
+        if ($update_status) {
+            $response = [
+                'status'  => true,
+                'message' => 'Data berhasil diperbarui.'
+            ];
+        } else {
+            $response = [
+                'status'  => false,
+                'message' => 'Gagal memperbarui data di database.'
+            ];
+        }
+
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode($response));
+    }
+
+    // update data kunjungan
+
+    public function edit_kunjungan()
+    {
+        $id = $this->input->post('id');
         $id_denahs = $this->input->post('code');
         $nominal = $this->input->post('nominal');
 
@@ -377,7 +419,5 @@ class Customer extends AUTH_Controller
         header('Content-Type: application/json');
         echo json_encode($response);
     }
-
-
 
 }
