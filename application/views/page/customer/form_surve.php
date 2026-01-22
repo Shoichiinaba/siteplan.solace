@@ -315,6 +315,8 @@ textarea:focus+label {
                     <div class="row mb-3">
                         <div class="col-md-6 mb-2">
                             <div class="input-wrapper">
+                                <input type="text" id="id-marketing" name="id_marketing" class="col-lg-12"
+                                    value="<?php echo $userdata->id; ?>" required hidden>
                                 <input type="text" id="id" name="id" class="col-lg-12" value="" hidden>
                             </div>
                         </div>
