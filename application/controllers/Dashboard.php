@@ -28,6 +28,8 @@ class Dashboard extends AUTH_Controller
 
     public function index()
     {
+        $data['userdata'] = $this->session->userdata('userdata');
+
         $id                         = $this->session->userdata('userdata')->id;
         $role                       = $this->session->userdata('userdata')->role;
         $data['perumahan']          = $this->M_admin->m_perumahan($id, $role);

@@ -358,62 +358,130 @@ class Customer extends AUTH_Controller
 
     public function edit_kunjungan()
     {
-        $id = $this->input->post('id');
-        $id_denahs = $this->input->post('code');
-        $nominal = $this->input->post('nominal');
+        $id         = $this->input->post('id'); // id visit
+        $id_denahs  = $this->input->post('code');
+        $nominal    = $this->input->post('nominal');
 
         if (!empty($id)) {
-            $data = array(
+
+            // ===============================
+            // DATA VISIT
+            // ===============================
+            $data = [
                 'id_marketing' => $this->input->post('id_marketing'),
-                'nama' => $this->input->post('nama'),
-                'tanggal' => $this->input->post('tanggal'),
-                'no_tlp' => $this->input->post('no_tlp'),
-                'unit' => $this->input->post('unit'),
-                'kategori' => $this->input->post('kategori'),
-                'keterangan' => $this->input->post('keterangan'),
-                'sumber' => $this->input->post('sumber'),
-                'hasil_fu' => $this->input->post('hasil_fu')
-            );
+                'id_blok'      => $this->input->post('code'),
+                'nama'         => $this->input->post('nama'),
+                'tanggal'      => $this->input->post('tanggal'),
+                'no_tlp'       => $this->input->post('no_tlp'),
+                'unit'         => $this->input->post('unit'),
+                'kategori'     => $this->input->post('kategori'),
+                'keterangan'   => $this->input->post('keterangan'),
+                'sumber'       => $this->input->post('sumber'),
+                'hasil_fu'     => $this->input->post('hasil_fu')
+            ];
 
-            $data_denah = array(
-                'type_unit' => $this->input->post('type_unit'),
-                'type' => 'Dipesan',
-                'color' => 'red',
-            );
+            // ===============================
+            // DATA DENAH
+            // ===============================
+            $data_denah = [
+                'type_unit'  => $this->input->post('type_unit'),
+                'type'       => 'Dipesan',
+                'color'      => 'red',
+                'user_admin' => $this->input->post('nama_marketing'),
+            ];
 
-            $data_trans = array(
+            // ===============================
+            // DATA TRANSAKSI
+            // ===============================
+            $data_trans = [
                 'id_trans_denahs' => $id_denahs,
-                'nama_cus' => $this->input->post('nama'),
-                'tgl_trans' => $this->input->post('tanggal'),
-                'status_trans' => $this->input->post('kategori'),
-                'no_wa' => $this->input->post('no_tlp'),
-                'nominal' => $this->input->post('nominal'),
-            );
+                'nama_cus'        => $this->input->post('nama'),
+                'tgl_trans'       => $this->input->post('tanggal'),
+                'status_trans'    => $this->input->post('kategori'),
+                'no_wa'           => $this->input->post('no_tlp'),
+                'nominal'         => $nominal,
+            ];
 
-            $update_status = $this->Visit_model->update_data('visit', $data, $id);
-            $update_denah = true;
+            // ===============================
+            // DATA UNIT PROGRES
+            // ===============================
+            $data_unitpro = [
+                'id_denahs' => $id_denahs,
+                'id_agent'  => $this->input->post('id_marketing'),
+            ];
 
-            if ($update_status) {
-                if (!empty($id_denahs)) {
-                    $update_denah = $this->Visit_model->update_denah('denahs', $data_denah, $id_denahs);
-                }
+            // ===============================
+            // DATA CUSTOMER ACCOUNT
+            // ===============================
+            $data_account_cus = [
+                'id_visit_account' => $id,
+                'nama'             => $this->input->post('nama'),
+                'telepon'          => $this->input->post('no_tlp'),
+                'foto'             => 'default.png',
+                'role'             => 'customer',
+                'dibuat'           => date('Y-m-d H:i:s'),
+            ];
 
-                $result = $this->Visit_model->save_trans($data_trans);
+            // ===============================
+            // UPDATE VISIT
+            // ===============================
+            $update_visit = $this->Visit_model->update_data('visit', $data, $id);
 
-                if ($result) {
-                    $response['status'] = true;
-                    $response['message'] = 'Data berhasil diperbarui.';
+            if ($update_visit) {
+
+                // ===============================
+                // INSERT / UPDATE UNIT PROGRES
+                // ===============================
+                $unit_progres = $this->Visit_model->get_unit_progres($id_denahs);
+
+                if ($unit_progres) {
+                    $this->Visit_model->update_unit_progres($data_unitpro, $id_denahs);
                 } else {
-                    $response['status'] = false;
-                    $response['message'] = 'Gagal menyimpan transaksi.';
+                    $this->Visit_model->insert_unit_progres($data_unitpro);
                 }
+
+                // ===============================
+                // UPDATE DENAH
+                // ===============================
+                if (!empty($id_denahs)) {
+                    $this->Visit_model->update_denah('denahs', $data_denah, $id_denahs);
+                }
+
+                // ===============================
+                // INSERT TRANSAKSI
+                // ===============================
+                $this->Visit_model->save_trans($data_trans);
+
+                // ===============================
+                // INSERT / UPDATE CUSTOMER ACCOUNT
+                // ===============================
+                $cek_account = $this->Visit_model->get_customer_by_visit($id);
+
+                if ($cek_account) {
+                    // UPDATE
+                    $this->Visit_model->update_customer_account($data_account_cus, $id);
+                } else {
+                    // INSERT
+                    $this->Visit_model->insert_customer_account($data_account_cus);
+                }
+
+                $response = [
+                    'status'  => true,
+                    'message' => 'Data berhasil diperbarui.'
+                ];
+
             } else {
-                $response['status'] = false;
-                $response['message'] = 'Gagal memperbarui data di database.';
+                $response = [
+                    'status'  => false,
+                    'message' => 'Gagal memperbarui data visit.'
+                ];
             }
+
         } else {
-            $response['status'] = false;
-            $response['message'] = 'ID tidak valid. Data tidak dapat diperbarui.';
+            $response = [
+                'status'  => false,
+                'message' => 'ID tidak valid. Data tidak dapat diperbarui.'
+            ];
         }
 
         header('Content-Type: application/json');

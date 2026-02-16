@@ -117,6 +117,11 @@
     border-bottom-left-radius: 1rem;
     border-bottom-right-radius: 1rem;
 }
+
+.alert-primary,
+.alert-primary i {
+    color: #fff !important;
+}
 </style>
 
 <div class="container-fluid py-4">
@@ -208,9 +213,10 @@ $(document).ready(function() {
                 $('#load_data').html('');
                 if (response.data.trim() === '') {
                     $('#load_data_message').html(
-                        '<div class="alert alert-primary alert-dismissible" role="alert">' +
-                        '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
-                        '<i class="fa fa-folder-open"></i> Data Agent Tidak Ditemukan...</div>'
+                        '<div class="alert alert-primary alert-dismissible text-white" role="alert">' +
+                        '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>' +
+                        '<i class="fa fa-folder-open"></i> Belum ada Unit yang deal...' +
+                        '</div>'
                     );
                     action = 'active';
                 } else {

@@ -216,7 +216,7 @@ function getChartDataset($id_perum = null, $database)
 <div class="container-fluid py-4">
     <div class="row">
         <div class="col-xl-3 col-6 mb-xl-0 mb-4">
-            <div class="card">
+            <div class="card border-0 shadow-3">
                 <div class="card-body p-2">
                     <div class="row">
                         <div class="col-3">
@@ -248,7 +248,7 @@ function getChartDataset($id_perum = null, $database)
             </div>
         </div>
         <div class="col-xl-3 col-6 mb-xl-0 mb-4">
-            <div class="card">
+            <div class="card border-0 shadow-3">
                 <div class="card-body p-2">
                     <div class="row">
                         <div class="col-3">
@@ -280,7 +280,7 @@ function getChartDataset($id_perum = null, $database)
             </div>
         </div>
         <div class="col-xl-3 col-6 mb-xl-0 mb-4">
-            <div class="card">
+            <div class="card border-0 shadow-3">
                 <div class="card-body p-2">
                     <div class="row">
                         <div class="col-3">
@@ -313,7 +313,7 @@ function getChartDataset($id_perum = null, $database)
             </div>
         </div>
         <div class="col-xl-3 col-6">
-            <div class="card">
+            <div class="card border-0 shadow-3">
                 <div class="card-body p-2">
                     <div class="row">
                         <div class="col-3">
@@ -347,93 +347,92 @@ function getChartDataset($id_perum = null, $database)
     </div>
     <div class="row my-4">
         <div class="col-lg-12 col-md-6 mb-md-0 mb-4">
-            <div class="card">
-                <div class="card-header pb-0">
-                    <div class="row">
-                        <!-- chart -->
-                        <!-- pengembangan fitur baru dalam prosespengerjaan -->
-                        <div class="col-lg-6 col-12 ">
-                            <div class="card mb-2">
-                                <div class="card-body p-1">
-                                    <div class="col-lg-12 col-10 mb-0">
-                                        <p class="text-sm mb-0 mt-0">
-                                            <i class="fa fa-check text-info" aria-hidden="true"></i>
-                                            <span class="font-weight-bold ms-1">Transaksi</span> Hampir Melewati
-                                            <span class="font-weight-bold ms-0 text-danger">Deadline</span>
-                                        </p>
-                                    </div>
-                                    <div class="card-body px-0 pb-2 mt-0 mb-0 pt-0 pb-0">
-                                        <div class="secondaryContainer">
-                                            <table class="">
-                                                <thead>
-                                                    <tr class="">
-                                                        <th
-                                                            class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ">
-                                                            Kode Unit
-                                                        </th>
-                                                        <th
-                                                            class="text-uppercase text-center text-secondary text-xxs font-weight-bolder opacity-7  ">
-                                                            Transaction
-                                                        </th>
-                                                        <th
-                                                            class="text-center text-uppercase text-secondary text-xxs font-weight-bolder ">
-                                                            Progres
-                                                        </th>
-                                                        <th
-                                                            class="text-center text-uppercase text-secondary text-xxs font-weight-bolder ">
-                                                            Days
-                                                        </th>
-                                                        <th
-                                                            class="text-center text-uppercase text-secondary text-xxs font-weight-bolder ">
-                                                            Hub
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody id="data-deadline">
+            <div class="card-header pb-0">
+                <div class="row">
+                    <!-- chart -->
+                    <!-- pengembangan fitur baru dalam prosespengerjaan -->
+                    <div class="col-lg-6 col-12 ">
+                        <div class="card border-0 shadow-4 mb-3">
+                            <div class="card-body p-1">
+                                <div class="col-lg-12 col-10 mb-0">
+                                    <p class="text-sm mb-0 mt-0">
+                                        <i class="fa fa-check text-info" aria-hidden="true"></i>
+                                        <span class="font-weight-bold ms-1">Transaksi</span> Hampir Melewati
+                                        <span class="font-weight-bold ms-0 text-danger">Deadline</span>
+                                    </p>
+                                </div>
+                                <div class="card-body px-0 pb-2 mt-0 mb-0 pt-0 pb-0">
+                                    <div class="secondaryContainer">
+                                        <table class="">
+                                            <thead>
+                                                <tr class="">
+                                                    <th
+                                                        class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ">
+                                                        Kode Unit
+                                                    </th>
+                                                    <th
+                                                        class="text-uppercase text-center text-secondary text-xxs font-weight-bolder opacity-7  ">
+                                                        Transaction
+                                                    </th>
+                                                    <th
+                                                        class="text-center text-uppercase text-secondary text-xxs font-weight-bolder ">
+                                                        Progres
+                                                    </th>
+                                                    <th
+                                                        class="text-center text-uppercase text-secondary text-xxs font-weight-bolder ">
+                                                        Days
+                                                    </th>
+                                                    <th
+                                                        class="text-center text-uppercase text-secondary text-xxs font-weight-bolder ">
+                                                        Hub
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="data-deadline">
 
-                                                </tbody>
-                                            </table>
-                                            <div id="load_message"></div>
-                                            <!-- <div class="text-center mt-0">
+                                            </tbody>
+                                        </table>
+                                        <div id="load_message"></div>
+                                        <!-- <div class="text-center mt-0">
                                                 <a href="#" id="down"><i class="fa fa-hand-o-down down-icon"></i></a>
                                             </div> -->
-                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <!-- akhir pengembangan fitur baru dalam prosespengerjaan -->
-                        <div class="col-lg-6 col-12 ">
-                            <div class="card mb-2">
-                                <div class="card-body p-2">
-                                    <div class="chart">
-                                        <canvas id="barChart" class="chart-canvas" height="200px"></canvas>
-                                    </div>
+                    </div>
+                    <!-- akhir pengembangan fitur baru dalam prosespengerjaan -->
+                    <div class="col-lg-6 col-12 ">
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body p-2">
+                                <div class="chart">
+                                    <canvas id="barChart" class="chart-canvas" height="200px"></canvas>
                                 </div>
                             </div>
                         </div>
-                        <?php
+                    </div>
+                    <?php
                             foreach ($perumahan as $data) {
                                 $id_perum = $data->id_perum;
                         ?>
-                        <div class="col-lg-6 col-12">
-                            <div class="card mb-2">
-                                <div class="card-body p-2">
-                                    <span class="nav-link-text ms-1"><?= $data->nama; ?></span>
-                                    <div class="chart">
-                                        <canvas id="myChart<?= $data->id_perum; ?>" class="chart-canvas"
-                                            height="200px"></canvas>
-                                        <?php
+                    <div class="col-lg-6 col-12">
+                        <div class="card border-0 shadow-4 mb-3">
+                            <div class="card-body p-2">
+                                <span class="nav-link-text ms-1"><?= $data->nama; ?></span>
+                                <div class="chart">
+                                    <canvas id="myChart<?= $data->id_perum; ?>" class="chart-canvas"
+                                        height="200px"></canvas>
+                                    <?php
                                     foreach ($area_siteplan as $area) :
                                         if ($area->id_perum_siteplan == $id_perum) {
                                             $nama = $data->nama;
                                             $tittle = preg_replace("![^a-z0-9]+!i", "-", $nama);
                                     ?>
-                                        <?php if ($ambil->role == 'Admin') : ?>
-                                        <a href="<?php echo site_url('Dashboard/detail/' . $tittle); ?>"
-                                            class="mask bg-gradient-dark opacity-0"></a>
-                                        <?php endif; ?>
-                                        <?php
+                                    <?php if ($ambil->role == 'Admin') : ?>
+                                    <a href="<?php echo site_url('Dashboard/detail/' . $tittle); ?>"
+                                        class="mask bg-gradient-dark opacity-0"></a>
+                                    <?php endif; ?>
+                                    <?php
                                         }
                                     endforeach;
 
@@ -455,89 +454,88 @@ function getChartDataset($id_perum = null, $database)
                                     });
                                     ?>
 
-                                        <script>
-                                        window.data_grafik = window.data_grafik || [];
+                                    <script>
+                                    window.data_grafik = window.data_grafik || [];
 
-                                        var ctx<?= $data->id_perum; ?> = document.getElementById(
-                                            'myChart<?= $data->id_perum; ?>').getContext('2d');
+                                    var ctx<?= $data->id_perum; ?> = document.getElementById(
+                                        'myChart<?= $data->id_perum; ?>').getContext('2d');
 
-                                        // Ambil dataset dari PHP
-                                        window.data_grafik["<?= $data->id_perum ?>"] =
-                                            <?php echo json_encode(getChartDataset($data->id_perum, $transaksi)); ?>;
+                                    // Ambil dataset dari PHP
+                                    window.data_grafik["<?= $data->id_perum ?>"] =
+                                        <?php echo json_encode(getChartDataset($data->id_perum, $transaksi)); ?>;
 
-                                        // Inisialisasi Chart.js
-                                        var chart = new Chart(ctx<?= $data->id_perum; ?>, {
-                                            type: 'bar',
-                                            data: {
-                                                labels: data_grafik["<?= $data->id_perum ?>"].label,
-                                                datasets: data_grafik["<?= $data->id_perum ?>"].data
+                                    // Inisialisasi Chart.js
+                                    var chart = new Chart(ctx<?= $data->id_perum; ?>, {
+                                        type: 'bar',
+                                        data: {
+                                            labels: data_grafik["<?= $data->id_perum ?>"].label,
+                                            datasets: data_grafik["<?= $data->id_perum ?>"].data
+                                        },
+                                        options: {
+                                            responsive: true,
+                                            maintainAspectRatio: false,
+                                            scales: {
+                                                yAxes: [{
+                                                    ticks: {
+                                                        beginAtZero: true,
+                                                        precision: 0, // ✅ angka bulat tanpa koma
+                                                        stepSize: 1 // ✅ kelipatan 1
+                                                    },
+                                                    gridLines: {
+                                                        color: 'rgba(200,200,200,0.2)'
+                                                    }
+                                                }],
+                                                xAxes: [{
+                                                    gridLines: {
+                                                        display: false
+                                                    }
+                                                }]
                                             },
-                                            options: {
-                                                responsive: true,
-                                                maintainAspectRatio: false,
-                                                scales: {
-                                                    yAxes: [{
-                                                        ticks: {
-                                                            beginAtZero: true,
-                                                            precision: 0, // ✅ angka bulat tanpa koma
-                                                            stepSize: 1 // ✅ kelipatan 1
-                                                        },
-                                                        gridLines: {
-                                                            color: 'rgba(200,200,200,0.2)'
-                                                        }
-                                                    }],
-                                                    xAxes: [{
-                                                        gridLines: {
-                                                            display: false
-                                                        }
-                                                    }]
-                                                },
-                                                tooltips: { // ✅ Tooltip custom
-                                                    enabled: true,
-                                                    mode: 'index',
-                                                    intersect: false,
-                                                    backgroundColor: 'rgba(0,0,0,0.8)',
-                                                    titleFontColor: '#fff',
-                                                    bodyFontColor: '#fff',
-                                                    cornerRadius: 4,
-                                                    callbacks: {
-                                                        label: function(tooltipItem, data) {
-                                                            const datasetLabel = data.datasets[tooltipItem
-                                                                .datasetIndex].label || '';
-                                                            const value = tooltipItem.yLabel;
-                                                            return datasetLabel + ': ' + value;
-                                                        }
+                                            tooltips: { // ✅ Tooltip custom
+                                                enabled: true,
+                                                mode: 'index',
+                                                intersect: false,
+                                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                                titleFontColor: '#fff',
+                                                bodyFontColor: '#fff',
+                                                cornerRadius: 4,
+                                                callbacks: {
+                                                    label: function(tooltipItem, data) {
+                                                        const datasetLabel = data.datasets[tooltipItem
+                                                            .datasetIndex].label || '';
+                                                        const value = tooltipItem.yLabel;
+                                                        return datasetLabel + ': ' + value;
                                                     }
-                                                },
-                                                legend: {
-                                                    position: 'top',
-                                                    labels: {
-                                                        fontSize: 11,
-                                                        boxWidth: 12
-                                                    }
-                                                },
-                                                animation: {
-                                                    duration: 700
                                                 }
+                                            },
+                                            legend: {
+                                                position: 'top',
+                                                labels: {
+                                                    fontSize: 11,
+                                                    boxWidth: 12
+                                                }
+                                            },
+                                            animation: {
+                                                duration: 700
                                             }
-                                        });
-                                        </script>
-                                    </div>
+                                        }
+                                    });
+                                    </script>
                                 </div>
                             </div>
                         </div>
-                        <?php
+                    </div>
+                    <?php
                             }
                         ?>
 
-                        <!-- akhir chart -->
-                    </div>
+                    <!-- akhir chart -->
                 </div>
-                <div class="card-body px-0 pb-2">
-                    <div class="table-responsive">
-                        <table class="table align-items-center mb-0">
-                        </table>
-                    </div>
+            </div>
+            <div class="card-body px-0 pb-2">
+                <div class="table-responsive">
+                    <table class="table align-items-center mb-0">
+                    </table>
                 </div>
             </div>
         </div>

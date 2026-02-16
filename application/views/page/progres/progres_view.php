@@ -25,23 +25,53 @@
                     <input type="hidden" id="id-unit" name="id_unit">
                     <input type="hidden" id="id-tahap" name="id_tahap">
                     <div class="row mb-1 mt-3">
-                        <div class="col-md-6 mb-0">
+                        <div class="row mb-3 mt-3">
+                            <div class="col-md-6 p-0 m-0">
+                                <div class="input-wrapper">
+                                    <label class="label-select">Minggu Ke</label>
+                                    <select type="text" id="minggu-ke" class="col-lg-12">
+                                        <option value="">Pilih Minggu Ke</option>
+                                        <option value="1">Minggu Ke-1</option>
+                                        <option value="2">Minggu Ke-2</option>
+                                        <option value="3">Minggu Ke-3</option>
+                                        <option value="4">Minggu Ke-4</option>
+                                        <option value="5">Minggu Ke-5</option>
+                                        <option value="1">Minggu Ke-6</option>
+                                        <option value="2">Minggu Ke-7</option>
+                                        <option value="3">Minggu Ke-8</option>
+                                        <option value="4">Minggu Ke-9</option>
+                                        <option value="5">Minggu Ke-10</option>
+                                        <option value="1">Minggu Ke-11</option>
+                                        <option value="2">Minggu Ke-12</option>
+                                        <option value="3">Minggu Ke-13</option>
+                                        <option value="4">Minggu Ke-14</option>
+                                        <option value="5">Minggu Ke-15</option>
+                                        <option value="1">Minggu Ke-16</option>
+                                        <option value="2">Minggu Ke-17</option>
+                                        <option value="3">Minggu Ke-18</option>
+                                        <option value="4">Minggu Ke-19</option>
+                                        <option value="5">Minggu Ke-20</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3 p-0 m-0">
+                                <div class="input-wrapper">
+                                    <input type="text" id="start-date" name="start_date" class="col-lg-12">
+                                    <label class="label-in">Start Date</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3 m-0 p-0">
+                                <div class="input-wrapper">
+                                    <input type="text" id="end-date" name="end_date" class="col-lg-12">
+                                    <label class="label-in">End Date</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12 m-0 p-0">
                             <div class="input-wrapper">
                                 <textarea type="text" id="deskripsi" class="col-lg-12"></textarea>
                                 <label class="label-in">Deskripsi</label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="input-wrapper">
-                                <label class="label-select">Minggu Ke</label>
-                                <select type="text" id="minggu-ke" class="col-lg-12">
-                                    <option value="">Pilih Minggu Ke</option>
-                                    <option value="1">Minggu Ke-1</option>
-                                    <option value="2">Minggu Ke-2</option>
-                                    <option value="3">Minggu Ke-3</option>
-                                    <option value="4">Minggu Ke-4</option>
-                                    <option value="5">Minggu Ke-5</option>
-                                </select>
                             </div>
                         </div>
                     </div>
@@ -72,11 +102,23 @@
 <div class="modal fade" id="modalPreviewImage">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
+
             <div class="modal-header">
                 <h5 class="modal-title">Foto Progres</h5>
                 <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="modalImageBody"></div>
+
+            <div class="card-body pt-4 p-3">
+                <li class="list-group-item progress-info-green shadow-lg">
+                    <div class="d-flex flex-column" id="modalProgressInfo"></div>
+                </li>
+
+                <div class="modal-body">
+                    <h5 class="modal-title text-center mb-3">Foto Progres</h5>
+                    <div class="row g-3" id="modalImageBody"></div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -84,6 +126,60 @@
 
 
 <script>
+$(function() {
+    $('input[name="end_date"]').daterangepicker({
+        singleDatePicker: true,
+        showDropdowns: true,
+        minYear: 1901,
+        locale: {
+            format: 'DD-MM-YYYY'
+        }
+
+    });
+});
+
+$(function() {
+    $('input[name="start_date"]').daterangepicker({
+        singleDatePicker: true,
+        showDropdowns: true,
+        minYear: 1901,
+        locale: {
+            format: 'DD-MM-YYYY'
+        }
+
+    });
+});
+// akhir datepicker
+
+function filterMingguKe(idUnit) {
+    const select = $('#minggu-ke');
+
+    // simpan semua option awal
+    if (!select.data('all-options')) {
+        select.data('all-options', select.html());
+    }
+
+    // reset option
+    select.html(select.data('all-options'));
+
+    $.ajax({
+        url: "<?= base_url('Progres_pembangunan/get_minggu_terpakai') ?>",
+        type: "POST",
+        dataType: "json",
+        data: {
+            id_unit: idUnit,
+        },
+        success: function(usedWeeks) {
+
+            if (!Array.isArray(usedWeeks)) return;
+
+            usedWeeks.forEach(function(week) {
+                select.find(`option[value="${week}"]`).remove();
+            });
+        }
+    });
+}
+
 Dropzone.autoDiscover = false;
 
 let progresDropzone;
@@ -106,11 +202,22 @@ $(document).on('click', '.tahap-click', function() {
 
     // ================= RESET FORM =================
     const form = document.querySelector('#tambah-progres form');
-    form.reset();
+    if (form) form.reset();
+
+    // ================= RESET DROPZONE =================
+    if (progresDropzone) {
+        progresDropzone.removeAllFiles(true);
+    }
+
+    const idTahap = $(this).data('idTahap');
+    const idUnit = $(this).data('idUnit');
 
     // ================= SET HIDDEN INPUT =================
-    $('#id-tahap').val($(this).data('idTahap'));
-    $('#id-unit').val($(this).data('idUnit'));
+    $('#id-tahap').val(idTahap);
+    $('#id-unit').val(idUnit);
+
+    // 🔥 FILTER MINGGU KE BERDASARKAN UNIT + TAHAP
+    filterMingguKe(idUnit, idTahap);
 
     // ================= BUKA MODAL =================
     const modalEl = document.getElementById('tambah-progres');
@@ -140,6 +247,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append("id_tahap", $('#id-tahap').val());
                 formData.append("deskripsi", $('#deskripsi').val());
                 formData.append("pekan", $('#minggu-ke').val());
+                formData.append("start_date", $('#start-date').val());
+                formData.append("end_date", $('#end-date').val());
             });
 
             dz.on("success", function(file, response) {
@@ -200,22 +309,54 @@ function resetProgresModal() {
     document.getElementById('submitprogres').disabled = false;
 }
 
+$(document).on('click', '#modalImageBody img', function() {
+    window.open(this.src, '_blank');
+});
+
 // dataprogres klik
 $(document).on('click', '.progress-click', function() {
 
+    const minggu = $(this).data('minggu');
+    const mulai = $(this).data('mulai');
+    const selesai = $(this).data('selesai');
+    const deskripsi = $(this).data('deskripsi');
     const images = $(this).data('images');
 
+    // TEXT INFO
+    $('#modalProgressInfo').html(`
+        <div class="text-center fw-bold mb-2">${minggu}</div>
+
+        <div class="d-flex justify-content-between text-sm mb-2">
+            <span><b>Mulai:</b> ${mulai}</span>
+            <span><b>Selesai:</b> ${selesai}</span>
+        </div>
+
+        <div class="text-sm">
+            ${deskripsi.replace(/\n/g, '<br>')}
+        </div>
+    `);
+
+    // FOTO
     if (!images || images.length === 0) {
-        Swal.fire('Info', 'Progres ini tidak memiliki foto', 'info');
-        return;
+        $('#modalImageBody').html(
+            '<p class="text-center text-muted">Tidak ada foto progres</p>'
+        );
+    } else {
+
+        let html = '';
+
+        images.forEach(img => {
+            html += `
+        <div class="col-12 col-md-6 shadow-lg">
+            <div class="border rounded overflow-hidden">
+                <img src="${img}" class="img-fluid w-100" style="object-fit: cover;">
+            </div>
+        </div>
+    `;
+        });
+
+        $('#modalImageBody').html(html);
     }
-
-    let html = '';
-    images.forEach(img => {
-        html += `<img src="${img}" class="img-fluid rounded mb-2">`;
-    });
-
-    $('#modalImageBody').html(html);
 
     new bootstrap.Modal(
         document.getElementById('modalPreviewImage')

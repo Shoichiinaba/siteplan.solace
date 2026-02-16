@@ -29,6 +29,8 @@ class Home extends CI_Controller
 
     public function visit()
     {
+        $data['userdata'] = $this->session->userdata('userdata');
+
         $tittle = $this->uri->segment(3);
         $area = $this->uri->segment(4);
         $perum = preg_replace("![^a-z0-9]+!i", " ", $tittle);
@@ -280,13 +282,16 @@ class Home extends CI_Controller
         }
     }
 
+
     function search()
     {
         $draw = $this->input->get('draw');
         $start = ($this->input->get('start') != null) ? $this->input->get('start') : 0;
         $rowperpage = ($this->input->get('length') != null) ? $this->input->get('length') : 10;
         $order = ($this->input->get('order') != null) ? $this->input->get('order') : false;
-        $search = ($this->input->get('search') != null && $this->input->get('search')['value'] != null) ? $this->input->get('search') : false;
+        $search = ($this->input->get('search') != null && $this->input->get('search')['value'] != null)
+            ? $this->input->get('search') : false;
+
         $type_unit = $this->input->get('fil_type_unit');
         $payout = $this->input->get('fil_payout');
         $status = $this->input->get('status');
@@ -294,217 +299,491 @@ class Home extends CI_Controller
         $tgl_end = $this->input->get('tgl_end');
         $pdf = $this->input->get('pdf');
 
+        // ===============================
+        // SESSION
+        // ===============================
+        $userSession = $this->session->userdata('userdata');
+        $role       = strtolower(trim($userSession->role));
+        $user_admin = trim($userSession->nama);
+
+        $isAdmin    = ($role === 'admin');
 
         $model = new Denah_model;
-
-        $totalRows = $model->count();
-        $filteredRows = $totalRows;
         $id = $this->uri->segment(3);
-        $model = $model->where('map',  $id);
+
+        // ===============================
+        // FILTER DASAR
+        // ===============================
+        $model = $model->where('map', $id);
+
+        // ===============================
+        // FILTER USER (NON ADMIN)
+        // ===============================
+        if (!$isAdmin) {
+            $model = $model->where('user_admin', $user_admin);
+        }
+
         $model = $model->orderBy('id_denahs');
 
+        // ===============================
+        // SEARCH
+        // ===============================
         if ($search) {
             $search = $search['value'];
             $model = $model->where(function ($query) use ($search) {
-                $query->Where('code', 'LIKE', '%' . $search . '%')
+                $query->where('code', 'LIKE', '%' . $search . '%')
                     ->orWhere('description', 'LIKE', '%' . $search . '%')
                     ->orWhere('type', 'LIKE', '%' . $search . '%')
                     ->orWhere('color', 'LIKE', '%' . $search . '%');
             });
         }
+
+        // ===============================
+        // STATUS FILTER
+        // ===============================
         $id_denahs = [];
+
         if ($status) {
+
             if ($status == 'UTJ' || $status == 'DP' || $status == 'Sold Out') {
-                if ($tgl_start == '') {
-                    $sql = "SELECT *FROM transaksi, denahs WHERE transaksi.id_trans_denahs = denahs.id_denahs AND denahs.map = '$id' AND status_trans = '$status'";
-                    $query = $this->db->query($sql);
-                    if ($query->num_rows() > 0) {
-                        foreach ($query->result() as $row) {
-                            $id_denahs[] = $row->id_denahs;
-                        }
+
+                date_default_timezone_set("Asia/Jakarta");
+
+                $trx = $this->db->select('denahs.id_denahs')
+                    ->from('transaksi')
+                    ->join('denahs', 'transaksi.id_trans_denahs = denahs.id_denahs')
+                    ->where('denahs.map', $id)
+                    ->where('status_trans', $status);
+
+                if (!$isAdmin) {
+                    $trx->where('denahs.user_admin', $user_admin);
+                }
+
+                if ($tgl_start != '' && $tgl_end != '') {
+                    $trx->where("
+                        STR_TO_DATE(tgl_trans, '%d/%m/%Y')
+                        BETWEEN STR_TO_DATE('$tgl_start', '%d/%m/%Y')
+                        AND STR_TO_DATE('$tgl_end', '%d/%m/%Y')
+                    ", null, false);
+                }
+
+                $query = $trx->get();
+
+                if ($query->num_rows() > 0) {
+                    foreach ($query->result() as $row) {
+                        $id_denahs[] = $row->id_denahs;
                     }
+                }
+
+                if (!empty($id_denahs)) {
                     $model = $model->whereIn('id_denahs', $id_denahs);
                 } else {
-                    date_default_timezone_set("Asia/jakarta");
-                    $sql = "SELECT *FROM transaksi, denahs WHERE transaksi.id_trans_denahs = denahs.id_denahs AND denahs.map = '$id' AND status_trans = '$status' AND STR_TO_DATE(tgl_trans, '%d/%m/%Y') BETWEEN STR_TO_DATE('$tgl_start', '%d/%m/%Y') AND STR_TO_DATE('$tgl_end', '%d/%m/%Y')";
-                    $query = $this->db->query($sql);
-                    if ($query->num_rows() > 0) {
-                        foreach ($query->result() as $row) {
-                            $id_denahs[] = $row->id_denahs;
-                        }
-                    }
-                    $model = $model->whereIn('id_denahs', $id_denahs);
+                    $model = $model->where('id_denahs', 0);
                 }
-            } else {
 
+            } else {
                 $model = $model->where('type', $status);
             }
         }
+
+        // ===============================
+        // FILTER TYPE UNIT
+        // ===============================
         if ($type_unit) {
             if ($type_unit == '') {
-
                 $model = $model->where('type', $status);
             } else {
-
                 $model = $model->where('type_unit', $type_unit);
             }
         }
+
+        // ===============================
+        // FILTER PAYOUT
+        // ===============================
         if ($payout) {
             if ($type_unit == '') {
-
                 if ($payout == 'kpr') {
-                    $status_pembayaran = ['kpr-kom', 'kpr-sub'];
-                    $model = $model->whereIN('status_pembayaran', $status_pembayaran);
+                    $model = $model->whereIn('status_pembayaran', ['kpr-kom', 'kpr-sub']);
                 } else {
-                    $status_pembayaran = $payout;
-                    $model = $model->where('status_pembayaran', $status_pembayaran);
+                    $model = $model->where('status_pembayaran', $payout);
                 }
             } else {
                 if ($type_unit == 'Komersil') {
-                    if ($payout == 'kpr') {
-                        $status_pembayaran = 'kpr-kom';
-                    } else {
-
-                        $status_pembayaran = $payout;
-                    }
+                    $model = $model->where('status_pembayaran', $payout == 'kpr' ? 'kpr-kom' : $payout);
                 } else if ($type_unit == 'Subsidi') {
-                    if ($payout == 'kpr') {
-                        $status_pembayaran = 'kpr-sub';
-                    } else {
-
-                        $status_pembayaran = $payout;
-                    }
+                    $model = $model->where('status_pembayaran', $payout == 'kpr' ? 'kpr-sub' : $payout);
                 }
-                $model = $model->where('status_pembayaran', $status_pembayaran);
             }
         }
 
+        // ===============================
+        // COUNT SETELAH SEMUA FILTER
+        // ===============================
         $filteredRows = $model->count();
-        $model = $model->skip((int) $start);
-        $model = $model->take((int) $rowperpage);
 
+        $model = $model->skip((int)$start);
+        $model = $model->take((int)$rowperpage);
+
+        // ===============================
+        // ORDER
+        // ===============================
         if ($order) {
             foreach ($this->input->get('columns') as $key => $column) {
-                $direction = ($order[0]['dir'] == 'asc') ? 'ASC' : 'DESC';
                 if ($key == $order[0]['column']) {
-                    $model = $model->orderBy($column['name'], $direction);
+                    $direction = ($order[0]['dir'] == 'asc') ? 'ASC' : 'DESC';
+                    if (!empty($column['name'])) {
+                        $model = $model->orderBy($column['name'], $direction);
+                    }
                 }
             }
         }
+
         $resuls = $model->select('denahs.*')->get();
 
+        // ===============================
+        // OUTPUT DATA
+        // ===============================
         $data_arr = [];
         foreach ($resuls as $result) {
-            $id_denahs = $result->id_denahs;
-            $data = [
-                'code' => $result->code,
-                'description' => $result->description,
-                'type' => '<span class="pup" style="background-color:' . $result->color . '"></span> ' . $result->type,
-                'color' => '<div id="progres-' . $result->id_denahs . '" class="progress-wrapper">
-                                <div class="progress-info">
-                                    <div class="progress-percentage">
-                                        <span class="text-sm font-weight-bold">' . $result->progres_berkas . '%</span>
+                $id_denahs = $result->id_denahs;
+                $data = [
+                    'code' => $result->code,
+                    'description' => $result->description,
+                    'type' => '<span class="pup" style="background-color:' . $result->color . '"></span> ' . $result->type,
+                    'color' => '<div id="progres-' . $result->id_denahs . '" class="progress-wrapper">
+                                    <div class="progress-info">
+                                        <div class="progress-percentage">
+                                            <span class="text-sm font-weight-bold">' . $result->progres_berkas . '%</span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div >
-                                    <div class="progress-bar bg-success" role="progressbar" aria-valuenow="' . $result->progres_berkas . '" aria-valuemin="0" aria-valuemax="100" style="width: ' . $result->progres_berkas . '%;"></div>
-                                </div>
-                            </div>',
-            ];
+                                    <div >
+                                        <div class="progress-bar bg-success" role="progressbar" aria-valuenow="' . $result->progres_berkas . '" aria-valuemin="0" aria-valuemax="100" style="width: ' . $result->progres_berkas . '%;"></div>
+                                    </div>
+                                </div>',
+                ];
 
-            $data['type_unit'] = $result->type_unit;
-            if ($result->status_pembayaran == "kpr-sub" or $result->status_pembayaran == "kpr-kom") {
-                $data['status_pembayaran'] = 'KPR';
-            } else if ($result->status_pembayaran == "cash") {
-                $data['status_pembayaran'] = 'CASH';
-            } else {
+                $data['type_unit'] = $result->type_unit;
+                if ($result->status_pembayaran == "kpr-sub" or $result->status_pembayaran == "kpr-kom") {
+                    $data['status_pembayaran'] = 'KPR';
+                } else if ($result->status_pembayaran == "cash") {
+                    $data['status_pembayaran'] = 'CASH';
+                } else {
 
-                $data['status_pembayaran'] = $result->status_pembayaran;
-            }
-            if ($result->type == "Dipesan" or $result->type == "Sold Out") {
-                $data['action'] = '<button onclick="openDataRow(\'' . $result->id_denahs . '\',\'' . $result->type_unit . '\',\'' . $result->code . '\', \'' . $result->type . '\', \'' . $result->description . '\' , \'' . $result->progres_berkas . '\')" class="btn btn-sm bg-gradient-success" data-bs-toggle="modal" data-bs-target="#exampleModaledit"><i class="fa fa-edit" style="font-size:small;"></i> &nbsp;Edit</button>&nbsp;&nbsp;' .
-                    '<button type="button" onclick="getDataDoc(\'' . $result->id_denahs . '\',\'' . $result->type_unit . '\' ,\'' . $result->status_pembayaran . '\', \'' . $result->progres_berkas . '\')" id="btn-document-' . $result->id_denahs . '" class="btn-modal-document btn btn-sm bg-gradient-primary" value="' . $result->status_pembayaran . '" data-bs-toggle="modal" data-bs-target="#exampleModalatt"><i class="fa fa-paperclip" style="font-size:small;"></i> &nbsp;Doc</button>';
-            } else {
-                $data['action'] = '<button onclick="openDataRow(\'' . $result->id_denahs . '\',\'' . $result->type_unit . '\',\'' . $result->code . '\', \'' . $result->type . '\', \'' . $result->description . '\' , \'' . $result->progres_berkas . '\')" class="btn btn-sm bg-gradient-success" data-bs-toggle="modal" data-bs-target="#exampleModaledit"> <i class="fa fa-edit" style="font-size:small;"></i> &nbsp;Edit</button>';
-            }
-            $data['tgl_update'] = $result->tgl_update;
-            $data['user_admin'] = $result->user_admin;
-            $data_trans = [];
-            $count = [];
-            $sql = "SELECT *FROM transaksi WHERE id_trans_denahs = $id_denahs";
-            $query = $this->db->query($sql);
-            if ($query->num_rows() > 0) {
-                foreach ($query->result() as $row) {
-                    if ($row->status_trans == 'UTJ') {
-                        $data_trans[] = '<span class="border-transaksi">' . $row->status_trans . ' || ' . $row->tgl_trans . '</span><br>';
-                    }
-                    if ($result->type == 'Dipesan') {
+                    $data['status_pembayaran'] = $result->status_pembayaran;
+                }
+                if ($result->type == "Dipesan" or $result->type == "Sold Out") {
+                    $data['action'] = '<button onclick="openDataRow(\'' . $result->id_denahs . '\',\'' . $result->type_unit . '\',\'' . $result->code . '\', \'' . $result->type . '\', \'' . $result->description . '\' , \'' . $result->progres_berkas . '\')" class="btn btn-sm bg-gradient-success" data-bs-toggle="modal" data-bs-target="#exampleModaledit"><i class="fa fa-edit" style="font-size:small;"></i> &nbsp;Edit</button>&nbsp;&nbsp;' .
+                        '<button type="button" onclick="getDataDoc(\'' . $result->id_denahs . '\',\'' . $result->type_unit . '\' ,\'' . $result->status_pembayaran . '\', \'' . $result->progres_berkas . '\')" id="btn-document-' . $result->id_denahs . '" class="btn-modal-document btn btn-sm bg-gradient-primary" value="' . $result->status_pembayaran . '" data-bs-toggle="modal" data-bs-target="#exampleModalatt"><i class="fa fa-paperclip" style="font-size:small;"></i> &nbsp;Doc</button>';
+                } else {
+                    $data['action'] = '<button onclick="openDataRow(\'' . $result->id_denahs . '\',\'' . $result->type_unit . '\',\'' . $result->code . '\', \'' . $result->type . '\', \'' . $result->description . '\' , \'' . $result->progres_berkas . '\')" class="btn btn-sm bg-gradient-success" data-bs-toggle="modal" data-bs-target="#exampleModaledit"> <i class="fa fa-edit" style="font-size:small;"></i> &nbsp;Edit</button>';
+                }
+                $data['tgl_update'] = $result->tgl_update;
+                $data['user_admin'] = $result->user_admin;
+                $data_trans = [];
+                $count = [];
+                $sql = "SELECT *FROM transaksi WHERE id_trans_denahs = $id_denahs";
+                $query = $this->db->query($sql);
+                if ($query->num_rows() > 0) {
+                    foreach ($query->result() as $row) {
                         if ($row->status_trans == 'UTJ') {
-                            $tgl = preg_replace("![^a-z0-9]+!i", "-", $row->tgl_trans);
-                            date_default_timezone_set('Asia/Jakarta');
-                            $awal  = date_create('' . $tgl . '');
-                            $akhir = date_create(); // waktu sekarang, pukul 06:13
-                            $diff  = date_diff($akhir, $awal);
-                            if ($result->progres_berkas < '50') {
-                                if ($diff->days >= '0' && $diff->days <= '3') {
-                                    $count[] = '<span class="bg-dur-green">' . $diff->days . ' Hari</span>';
-                                } else if ($diff->days >= '4' && $diff->days <= '9') {
-                                    $count[] = '<span class="bg-dur-orange">' . $diff->days . ' Hari</span>';
-                                } else if ($diff->days >= '10') {
-                                    $count[] = '<span class="bg-dur-red">' . $diff->days . ' Hari</span>';
-                                }
-                            } else if ($result->progres_berkas >= '50' && $result->progres_berkas < '100') {
-                                if ($result->type_unit == 'Komersil') {
-                                    if ($diff->days <= '11' || $diff->days >= '11' && $diff->days <= '14') {
+                            $data_trans[] = '<span class="border-transaksi">' . $row->status_trans . ' || ' . $row->tgl_trans . '</span><br>';
+                        }
+                        if ($result->type == 'Dipesan') {
+                            if ($row->status_trans == 'UTJ') {
+                                $tgl = preg_replace("![^a-z0-9]+!i", "-", $row->tgl_trans);
+                                date_default_timezone_set('Asia/Jakarta');
+                                $awal  = date_create('' . $tgl . '');
+                                $akhir = date_create(); // waktu sekarang, pukul 06:13
+                                $diff  = date_diff($akhir, $awal);
+                                if ($result->progres_berkas < '50') {
+                                    if ($diff->days >= '0' && $diff->days <= '3') {
                                         $count[] = '<span class="bg-dur-green">' . $diff->days . ' Hari</span>';
-                                    } else if ($diff->days >= '15' && $diff->days <= '19') {
+                                    } else if ($diff->days >= '4' && $diff->days <= '9') {
                                         $count[] = '<span class="bg-dur-orange">' . $diff->days . ' Hari</span>';
-                                    } else if ($diff->days >= '20') {
+                                    } else if ($diff->days >= '10') {
                                         $count[] = '<span class="bg-dur-red">' . $diff->days . ' Hari</span>';
                                     }
-                                } else if ($result->type_unit == 'Subsidi') {
-                                    if ($diff->days <= '11' || $diff->days >= '11' && $diff->days <= '17') {
-                                        $count[] = '<span class="bg-dur-green">' . $diff->days . ' Hari</span>';
-                                    } else if ($diff->days >= '18' && $diff->days <= '24') {
-                                        $count[] = '<span class="bg-dur-orange">' . $diff->days . ' Hari</span>';
-                                    } else if ($diff->days >= '25') {
-                                        $count[] = '<span class="bg-dur-red">' . $diff->days . ' Hari</span>';
+                                } else if ($result->progres_berkas >= '50' && $result->progres_berkas < '100') {
+                                    if ($result->type_unit == 'Komersil') {
+                                        if ($diff->days <= '11' || $diff->days >= '11' && $diff->days <= '14') {
+                                            $count[] = '<span class="bg-dur-green">' . $diff->days . ' Hari</span>';
+                                        } else if ($diff->days >= '15' && $diff->days <= '19') {
+                                            $count[] = '<span class="bg-dur-orange">' . $diff->days . ' Hari</span>';
+                                        } else if ($diff->days >= '20') {
+                                            $count[] = '<span class="bg-dur-red">' . $diff->days . ' Hari</span>';
+                                        }
+                                    } else if ($result->type_unit == 'Subsidi') {
+                                        if ($diff->days <= '11' || $diff->days >= '11' && $diff->days <= '17') {
+                                            $count[] = '<span class="bg-dur-green">' . $diff->days . ' Hari</span>';
+                                        } else if ($diff->days >= '18' && $diff->days <= '24') {
+                                            $count[] = '<span class="bg-dur-orange">' . $diff->days . ' Hari</span>';
+                                        } else if ($diff->days >= '25') {
+                                            $count[] = '<span class="bg-dur-red">' . $diff->days . ' Hari</span>';
+                                        }
+                                        // $count[] = '<span class="bg-dur-sold-out">etst</span>';
                                     }
-                                    // $count[] = '<span class="bg-dur-sold-out">etst</span>';
+                                } else if ($result->progres_berkas == '100') {
+                                    $count[] = '<span class="bg-dur-sold-out">DONE</span>';
                                 }
-                            } else if ($result->progres_berkas == '100') {
-                                $count[] = '<span class="bg-dur-sold-out">DONE</span>';
+                            }
+                        } else if ($result->type == 'Sold Out') {
+                            if ($row->status_trans == 'Sold Out') {
+                                $count[] = '<span class="bg-dur-sold-out">' . $row->status_trans . '</span>';
                             }
                         }
-                    } else if ($result->type == 'Sold Out') {
-                        if ($row->status_trans == 'Sold Out') {
-                            $count[] = '<span class="bg-dur-sold-out">' . $row->status_trans . '</span>';
-                        }
                     }
                 }
-            }
-            $sql = "SELECT *FROM transaksi WHERE id_trans_denahs = $id_denahs AND status_trans = 'DP' ORDER BY id_trans DESC LIMIT 1";
-            $query = $this->db->query($sql);
-            if ($query->num_rows() > 0) {
-                foreach ($query->result() as $row) {
-                    $data_trans[] = '<span class="border-transaksi">' . $row->status_trans . ' || ' . $row->tahap . ' || ' . $row->tgl_trans . '</span><br>';
+                $sql = "SELECT *FROM transaksi WHERE id_trans_denahs = $id_denahs AND status_trans = 'DP' ORDER BY id_trans DESC LIMIT 1";
+                $query = $this->db->query($sql);
+                if ($query->num_rows() > 0) {
+                    foreach ($query->result() as $row) {
+                        $data_trans[] = '<span class="border-transaksi">' . $row->status_trans . ' || ' . $row->tahap . ' || ' . $row->tgl_trans . '</span><br>';
+                    }
                 }
+                $data['transaction'] = $data_trans;
+                $data['duration'] = $count;
+                $data_arr[] = $data;
             }
-            $data['transaction'] = $data_trans;
-            $data['duration'] = $count;
-            $data_arr[] = $data;
-        }
 
         return $this->output
             ->set_content_type('application/json')
             ->set_status_header(200)
             ->set_output(json_encode([
-                'draw'            => $draw,
-                'recordsTotal'    => $filteredRows,
-                'recordsFiltered' => $filteredRows,
+                'draw'            => intval($draw),
+                'recordsTotal'    => intval($filteredRows),
+                'recordsFiltered' => intval($filteredRows),
                 'data'            => $data_arr,
             ]));
     }
+
+    // function search()
+    // {
+    //     $draw = $this->input->get('draw');
+    //     $start = ($this->input->get('start') != null) ? $this->input->get('start') : 0;
+    //     $rowperpage = ($this->input->get('length') != null) ? $this->input->get('length') : 10;
+    //     $order = ($this->input->get('order') != null) ? $this->input->get('order') : false;
+    //     $search = ($this->input->get('search') != null && $this->input->get('search')['value'] != null) ? $this->input->get('search') : false;
+
+    //     $type_unit = $this->input->get('fil_type_unit');
+    //     $payout = $this->input->get('fil_payout');
+    //     $status = $this->input->get('status');
+    //     $tgl_start = $this->input->get('tgl_start');
+    //     $tgl_end = $this->input->get('tgl_end');
+    //     $pdf = $this->input->get('pdf');
+
+    //     $model = new Denah_model;
+
+    //     $totalRows = $model->count();
+    //     $filteredRows = $totalRows;
+    //     $id = $this->uri->segment(3);
+    //     $model = $model->where('map',  $id);
+
+    //     $model = $model->orderBy('id_denahs');
+
+    //     if ($search) {
+    //         $search = $search['value'];
+    //         $model = $model->where(function ($query) use ($search) {
+    //             $query->Where('code', 'LIKE', '%' . $search . '%')
+    //                 ->orWhere('description', 'LIKE', '%' . $search . '%')
+    //                 ->orWhere('type', 'LIKE', '%' . $search . '%')
+    //                 ->orWhere('color', 'LIKE', '%' . $search . '%');
+    //         });
+    //     }
+    //     $id_denahs = [];
+    //     if ($status) {
+    //         if ($status == 'UTJ' || $status == 'DP' || $status == 'Sold Out') {
+    //             if ($tgl_start == '') {
+    //                 $sql = "SELECT *FROM transaksi, denahs WHERE transaksi.id_trans_denahs = denahs.id_denahs AND denahs.map = '$id' AND status_trans = '$status'";
+    //                 $query = $this->db->query($sql);
+    //                 if ($query->num_rows() > 0) {
+    //                     foreach ($query->result() as $row) {
+    //                         $id_denahs[] = $row->id_denahs;
+    //                     }
+    //                 }
+
+    //                 $model = $model->whereIn('id_denahs', $id_denahs);
+
+    //             } else {
+    //                 date_default_timezone_set("Asia/jakarta");
+    //                 $sql = "SELECT *FROM transaksi, denahs WHERE transaksi.id_trans_denahs = denahs.id_denahs AND denahs.map = '$id' AND status_trans = '$status' AND STR_TO_DATE(tgl_trans, '%d/%m/%Y') BETWEEN STR_TO_DATE('$tgl_start', '%d/%m/%Y') AND STR_TO_DATE('$tgl_end', '%d/%m/%Y')";
+    //                 $query = $this->db->query($sql);
+    //                 if ($query->num_rows() > 0) {
+    //                     foreach ($query->result() as $row) {
+    //                         $id_denahs[] = $row->id_denahs;
+    //                     }
+    //                 }
+    //                 $model = $model->whereIn('id_denahs', $id_denahs);
+    //             }
+    //         } else {
+
+    //             $model = $model->where('type', $status);
+    //         }
+    //     }
+    //     if ($type_unit) {
+    //         if ($type_unit == '') {
+
+    //             $model = $model->where('type', $status);
+    //         } else {
+
+    //             $model = $model->where('type_unit', $type_unit);
+    //         }
+    //     }
+    //     if ($payout) {
+    //         if ($type_unit == '') {
+
+    //             if ($payout == 'kpr') {
+    //                 $status_pembayaran = ['kpr-kom', 'kpr-sub'];
+    //                 $model = $model->whereIN('status_pembayaran', $status_pembayaran);
+    //             } else {
+    //                 $status_pembayaran = $payout;
+    //                 $model = $model->where('status_pembayaran', $status_pembayaran);
+    //             }
+    //         } else {
+    //             if ($type_unit == 'Komersil') {
+    //                 if ($payout == 'kpr') {
+    //                     $status_pembayaran = 'kpr-kom';
+    //                 } else {
+
+    //                     $status_pembayaran = $payout;
+    //                 }
+    //             } else if ($type_unit == 'Subsidi') {
+    //                 if ($payout == 'kpr') {
+    //                     $status_pembayaran = 'kpr-sub';
+    //                 } else {
+
+    //                     $status_pembayaran = $payout;
+    //                 }
+    //             }
+    //             $model = $model->where('status_pembayaran', $status_pembayaran);
+    //         }
+    //     }
+
+    //     $filteredRows = $model->count();
+    //     $model = $model->skip((int) $start);
+    //     $model = $model->take((int) $rowperpage);
+
+    //     if ($order) {
+    //         foreach ($this->input->get('columns') as $key => $column) {
+    //             $direction = ($order[0]['dir'] == 'asc') ? 'ASC' : 'DESC';
+    //             if ($key == $order[0]['column']) {
+    //                 $model = $model->orderBy($column['name'], $direction);
+    //             }
+    //         }
+    //     }
+    //     $resuls = $model->select('denahs.*')->get();
+
+    //     $data_arr = [];
+    //     foreach ($resuls as $result) {
+    //         $id_denahs = $result->id_denahs;
+    //         $data = [
+    //             'code' => $result->code,
+    //             'description' => $result->description,
+    //             'type' => '<span class="pup" style="background-color:' . $result->color . '"></span> ' . $result->type,
+    //             'color' => '<div id="progres-' . $result->id_denahs . '" class="progress-wrapper">
+    //                             <div class="progress-info">
+    //                                 <div class="progress-percentage">
+    //                                     <span class="text-sm font-weight-bold">' . $result->progres_berkas . '%</span>
+    //                                 </div>
+    //                             </div>
+    //                             <div >
+    //                                 <div class="progress-bar bg-success" role="progressbar" aria-valuenow="' . $result->progres_berkas . '" aria-valuemin="0" aria-valuemax="100" style="width: ' . $result->progres_berkas . '%;"></div>
+    //                             </div>
+    //                         </div>',
+    //         ];
+
+    //         $data['type_unit'] = $result->type_unit;
+    //         if ($result->status_pembayaran == "kpr-sub" or $result->status_pembayaran == "kpr-kom") {
+    //             $data['status_pembayaran'] = 'KPR';
+    //         } else if ($result->status_pembayaran == "cash") {
+    //             $data['status_pembayaran'] = 'CASH';
+    //         } else {
+
+    //             $data['status_pembayaran'] = $result->status_pembayaran;
+    //         }
+    //         if ($result->type == "Dipesan" or $result->type == "Sold Out") {
+    //             $data['action'] = '<button onclick="openDataRow(\'' . $result->id_denahs . '\',\'' . $result->type_unit . '\',\'' . $result->code . '\', \'' . $result->type . '\', \'' . $result->description . '\' , \'' . $result->progres_berkas . '\')" class="btn btn-sm bg-gradient-success" data-bs-toggle="modal" data-bs-target="#exampleModaledit"><i class="fa fa-edit" style="font-size:small;"></i> &nbsp;Edit</button>&nbsp;&nbsp;' .
+    //                 '<button type="button" onclick="getDataDoc(\'' . $result->id_denahs . '\',\'' . $result->type_unit . '\' ,\'' . $result->status_pembayaran . '\', \'' . $result->progres_berkas . '\')" id="btn-document-' . $result->id_denahs . '" class="btn-modal-document btn btn-sm bg-gradient-primary" value="' . $result->status_pembayaran . '" data-bs-toggle="modal" data-bs-target="#exampleModalatt"><i class="fa fa-paperclip" style="font-size:small;"></i> &nbsp;Doc</button>';
+    //         } else {
+    //             $data['action'] = '<button onclick="openDataRow(\'' . $result->id_denahs . '\',\'' . $result->type_unit . '\',\'' . $result->code . '\', \'' . $result->type . '\', \'' . $result->description . '\' , \'' . $result->progres_berkas . '\')" class="btn btn-sm bg-gradient-success" data-bs-toggle="modal" data-bs-target="#exampleModaledit"> <i class="fa fa-edit" style="font-size:small;"></i> &nbsp;Edit</button>';
+    //         }
+    //         $data['tgl_update'] = $result->tgl_update;
+    //         $data['user_admin'] = $result->user_admin;
+    //         $data_trans = [];
+    //         $count = [];
+    //         $sql = "SELECT *FROM transaksi WHERE id_trans_denahs = $id_denahs";
+    //         $query = $this->db->query($sql);
+    //         if ($query->num_rows() > 0) {
+    //             foreach ($query->result() as $row) {
+    //                 if ($row->status_trans == 'UTJ') {
+    //                     $data_trans[] = '<span class="border-transaksi">' . $row->status_trans . ' || ' . $row->tgl_trans . '</span><br>';
+    //                 }
+    //                 if ($result->type == 'Dipesan') {
+    //                     if ($row->status_trans == 'UTJ') {
+    //                         $tgl = preg_replace("![^a-z0-9]+!i", "-", $row->tgl_trans);
+    //                         date_default_timezone_set('Asia/Jakarta');
+    //                         $awal  = date_create('' . $tgl . '');
+    //                         $akhir = date_create(); // waktu sekarang, pukul 06:13
+    //                         $diff  = date_diff($akhir, $awal);
+    //                         if ($result->progres_berkas < '50') {
+    //                             if ($diff->days >= '0' && $diff->days <= '3') {
+    //                                 $count[] = '<span class="bg-dur-green">' . $diff->days . ' Hari</span>';
+    //                             } else if ($diff->days >= '4' && $diff->days <= '9') {
+    //                                 $count[] = '<span class="bg-dur-orange">' . $diff->days . ' Hari</span>';
+    //                             } else if ($diff->days >= '10') {
+    //                                 $count[] = '<span class="bg-dur-red">' . $diff->days . ' Hari</span>';
+    //                             }
+    //                         } else if ($result->progres_berkas >= '50' && $result->progres_berkas < '100') {
+    //                             if ($result->type_unit == 'Komersil') {
+    //                                 if ($diff->days <= '11' || $diff->days >= '11' && $diff->days <= '14') {
+    //                                     $count[] = '<span class="bg-dur-green">' . $diff->days . ' Hari</span>';
+    //                                 } else if ($diff->days >= '15' && $diff->days <= '19') {
+    //                                     $count[] = '<span class="bg-dur-orange">' . $diff->days . ' Hari</span>';
+    //                                 } else if ($diff->days >= '20') {
+    //                                     $count[] = '<span class="bg-dur-red">' . $diff->days . ' Hari</span>';
+    //                                 }
+    //                             } else if ($result->type_unit == 'Subsidi') {
+    //                                 if ($diff->days <= '11' || $diff->days >= '11' && $diff->days <= '17') {
+    //                                     $count[] = '<span class="bg-dur-green">' . $diff->days . ' Hari</span>';
+    //                                 } else if ($diff->days >= '18' && $diff->days <= '24') {
+    //                                     $count[] = '<span class="bg-dur-orange">' . $diff->days . ' Hari</span>';
+    //                                 } else if ($diff->days >= '25') {
+    //                                     $count[] = '<span class="bg-dur-red">' . $diff->days . ' Hari</span>';
+    //                                 }
+    //                                 // $count[] = '<span class="bg-dur-sold-out">etst</span>';
+    //                             }
+    //                         } else if ($result->progres_berkas == '100') {
+    //                             $count[] = '<span class="bg-dur-sold-out">DONE</span>';
+    //                         }
+    //                     }
+    //                 } else if ($result->type == 'Sold Out') {
+    //                     if ($row->status_trans == 'Sold Out') {
+    //                         $count[] = '<span class="bg-dur-sold-out">' . $row->status_trans . '</span>';
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //         $sql = "SELECT *FROM transaksi WHERE id_trans_denahs = $id_denahs AND status_trans = 'DP' ORDER BY id_trans DESC LIMIT 1";
+    //         $query = $this->db->query($sql);
+    //         if ($query->num_rows() > 0) {
+    //             foreach ($query->result() as $row) {
+    //                 $data_trans[] = '<span class="border-transaksi">' . $row->status_trans . ' || ' . $row->tahap . ' || ' . $row->tgl_trans . '</span><br>';
+    //             }
+    //         }
+    //         $data['transaction'] = $data_trans;
+    //         $data['duration'] = $count;
+    //         $data_arr[] = $data;
+    //     }
+
+    //     return $this->output
+    //         ->set_content_type('application/json')
+    //         ->set_status_header(200)
+    //         ->set_output(json_encode([
+    //             'draw'            => $draw,
+    //             'recordsTotal'    => $filteredRows,
+    //             'recordsFiltered' => $filteredRows,
+    //             'data'            => $data_arr,
+    //         ]));
+    // }
 
     function get_data_pdf()
     {
@@ -1599,145 +1878,307 @@ class Home extends CI_Controller
         }
     }
 
+    // function upload_transaksi()
+    // {
+    //     $id_trans_denahs = $this->input->post('id-trans-denahs'); // ISI = CODE (A1, A2)
+    //     $nama_cus        = $this->input->post('nama-cus');
+    //     $no_wa           = $this->input->post('no-wa');
+    //     $status_trans    = $this->input->post('status-trans');
+    //     $tgl_trans       = $this->input->post('tgl-trans');
+    //     $nominal         = (int) $this->input->post('nominal');
+    //     $nominal_dp      = (int) $this->input->post('nominal-dp');
+    //     $user_admin      = $this->session->userdata('userdata')->nama;
+    //     $tgl_update      = date("d/m/Y | H:i:s");
+
+    //     // ==================================================
+    //     // SIMPAN / UPDATE TRANSAKSI
+    //     // ==================================================
+    //     $q_exist = $this->db->query("
+    //         SELECT * FROM transaksi
+    //         WHERE id_trans_denahs = ?
+    //         AND status_trans = ?
+    //     ", [$id_trans_denahs, $status_trans]);
+
+    //     if ($q_exist->num_rows() > 0) {
+
+    //         $tahap = $q_exist->num_rows() + 1;
+    //         $row   = $q_exist->row();
+
+    //         if ($status_trans == 'UTJ') {
+
+    //             $this->db->where('id_trans', $row->id_trans);
+    //             $this->db->update('transaksi', [
+    //                 'tgl_trans'  => $tgl_trans,
+    //                 'nominal'    => $nominal,
+    //                 'user_admin' => $user_admin,
+    //                 'tgl_update' => $tgl_update
+    //             ]);
+
+    //         } else {
+
+    //             $this->db->insert('transaksi', [
+    //                 'id_trans_denahs' => $id_trans_denahs,
+    //                 'nama_cus'        => $row->nama_cus,
+    //                 'no_wa'           => $row->no_wa,
+    //                 'status_trans'    => $status_trans,
+    //                 'tgl_trans'       => $tgl_trans,
+    //                 'nominal'         => $nominal,
+    //                 'nominal_dp'      => $row->nominal_dp,
+    //                 'tahap'           => 'Tahap '.$tahap,
+    //                 'user_admin'      => $user_admin,
+    //                 'tgl_update'      => $tgl_update
+    //             ]);
+    //         }
+
+    //     } else {
+
+    //         // transaksi pertama
+    //         $this->db->insert('transaksi', [
+    //             'id_trans_denahs' => $id_trans_denahs,
+    //             'nama_cus'        => $nama_cus,
+    //             'no_wa'           => $no_wa,
+    //             'status_trans'    => $status_trans,
+    //             'tgl_trans'       => $tgl_trans,
+    //             'nominal'         => $nominal,
+    //             'nominal_dp'      => ($status_trans == 'DP') ? $nominal_dp : null,
+    //             'tahap'           => ($status_trans == 'UTJ') ? 'Lunas' : 'Tahap 1',
+    //             'user_admin'      => $user_admin,
+    //             'tgl_update'      => $tgl_update
+    //         ]);
+    //     }
+
+    //     // ==================================================
+    //     // CEK DP LUNAS → SOLD OUT
+    //     // ==================================================
+
+    //     // 1️⃣ Ambil harga unit dari DP pertama
+    //     $q_harga = $this->db->query("
+    //         SELECT nominal_dp
+    //         FROM transaksi
+    //         WHERE id_trans_denahs = ?
+    //         AND nominal_dp IS NOT NULL
+    //         ORDER BY id_trans ASC
+    //         LIMIT 1
+    //     ", [$id_trans_denahs]);
+
+    //     if ($q_harga->num_rows() == 0) {
+    //         return;
+    //     }
+
+    //     $harga_unit = (int) $q_harga->row()->nominal_dp;
+
+    //     // 2️⃣ Total DP dibayar
+    //     $q_total = $this->db->query("
+    //         SELECT SUM(nominal) AS total_dp
+    //         FROM transaksi
+    //         WHERE id_trans_denahs = ?
+    //         AND status_trans = 'DP'
+    //     ", [$id_trans_denahs]);
+
+    //     $total_dp = (int) $q_total->row()->total_dp;
+
+    //     // 3️⃣ Jika LUNAS → UPDATE DENAH
+    //     if ($total_dp >= $harga_unit && $harga_unit > 0) {
+
+    //         // UPDATE DENAH (BERDASARKAN CODE)
+    //         $this->db->where('code', $id_trans_denahs);
+    //         $this->db->update('denahs', [
+    //             'type'       => 'Sold Out',
+    //             'color'      => 'yellow',
+    //             'tgl_update' => date('d/m/Y | H:i:s'),
+    //             'user_admin' => $user_admin
+    //         ]);
+
+    //         // DEBUG HARD (jika masih gagal)
+    //         if ($this->db->affected_rows() == 0) {
+    //             log_message('error', 'GAGAL UPDATE SOLD OUT | CODE: '.$id_trans_denahs);
+    //         }
+
+    //         // INSERT TRANSAKSI SOLD OUT JIKA BELUM ADA
+    //         $cek_so = $this->db->query("
+    //             SELECT id_trans
+    //             FROM transaksi
+    //             WHERE id_trans_denahs = ?
+    //             AND status_trans = 'Sold Out'
+    //         ", [$id_trans_denahs]);
+
+    //         if ($cek_so->num_rows() == 0) {
+    //             $this->db->insert('transaksi', [
+    //                 'id_trans_denahs' => $id_trans_denahs,
+    //                 'nama_cus'        => $nama_cus,
+    //                 'no_wa'           => $no_wa,
+    //                 'status_trans'    => 'Sold Out',
+    //                 'tgl_trans'       => date('d/m/Y'),
+    //                 'tahap'           => 'LUNAS',
+    //                 'user_admin'      => $user_admin,
+    //                 'tgl_update'      => date('d/m/Y | H:i:s')
+    //             ]);
+    //         }
+    //     }
+    // }
+
     function upload_transaksi()
-{
-    $id_trans_denahs = $this->input->post('id-trans-denahs'); // ISI = CODE (A1, A2)
-    $nama_cus        = $this->input->post('nama-cus');
-    $no_wa           = $this->input->post('no-wa');
-    $status_trans    = $this->input->post('status-trans');
-    $tgl_trans       = $this->input->post('tgl-trans');
-    $nominal         = (int) $this->input->post('nominal');
-    $nominal_dp      = (int) $this->input->post('nominal-dp');
-    $user_admin      = $this->session->userdata('userdata')->nama;
-    $tgl_update      = date("d/m/Y | H:i:s");
+    {
+        $id_trans_denahs = $this->input->post('id-trans-denahs'); // CODE (A1, A2)
+        $nama_cus        = $this->input->post('nama-cus');
+        $no_wa           = $this->input->post('no-wa');
+        $status_trans    = $this->input->post('status-trans');
+        $tgl_trans       = $this->input->post('tgl-trans');
+        $nominal         = (int) $this->input->post('nominal');
+        $nominal_dp      = (int) $this->input->post('nominal-dp');
+        $user_admin      = $this->session->userdata('userdata')->nama;
+        $tgl_update      = date("d/m/Y | H:i:s");
 
-    // ==================================================
-    // SIMPAN / UPDATE TRANSAKSI
-    // ==================================================
-    $q_exist = $this->db->query("
-        SELECT * FROM transaksi
-        WHERE id_trans_denahs = ?
-        AND status_trans = ?
-    ", [$id_trans_denahs, $status_trans]);
+        $id_transaksi_terakhir = null;
 
-    if ($q_exist->num_rows() > 0) {
-
-        $tahap = $q_exist->num_rows() + 1;
-        $row   = $q_exist->row();
-
-        if ($status_trans == 'UTJ') {
-
-            $this->db->where('id_trans', $row->id_trans);
-            $this->db->update('transaksi', [
-                'tgl_trans'  => $tgl_trans,
-                'nominal'    => $nominal,
-                'user_admin' => $user_admin,
-                'tgl_update' => $tgl_update
-            ]);
-
-        } else {
-
-            $this->db->insert('transaksi', [
-                'id_trans_denahs' => $id_trans_denahs,
-                'nama_cus'        => $row->nama_cus,
-                'no_wa'           => $row->no_wa,
-                'status_trans'    => $status_trans,
-                'tgl_trans'       => $tgl_trans,
-                'nominal'         => $nominal,
-                'nominal_dp'      => $row->nominal_dp,
-                'tahap'           => 'Tahap '.$tahap,
-                'user_admin'      => $user_admin,
-                'tgl_update'      => $tgl_update
-            ]);
-        }
-
-    } else {
-
-        // transaksi pertama
-        $this->db->insert('transaksi', [
-            'id_trans_denahs' => $id_trans_denahs,
-            'nama_cus'        => $nama_cus,
-            'no_wa'           => $no_wa,
-            'status_trans'    => $status_trans,
-            'tgl_trans'       => $tgl_trans,
-            'nominal'         => $nominal,
-            'nominal_dp'      => ($status_trans == 'DP') ? $nominal_dp : null,
-            'tahap'           => ($status_trans == 'UTJ') ? 'Lunas' : 'Tahap 1',
-            'user_admin'      => $user_admin,
-            'tgl_update'      => $tgl_update
-        ]);
-    }
-
-    // ==================================================
-    // CEK DP LUNAS → SOLD OUT
-    // ==================================================
-
-    // 1️⃣ Ambil harga unit dari DP pertama
-    $q_harga = $this->db->query("
-        SELECT nominal_dp
-        FROM transaksi
-        WHERE id_trans_denahs = ?
-        AND nominal_dp IS NOT NULL
-        ORDER BY id_trans ASC
-        LIMIT 1
-    ", [$id_trans_denahs]);
-
-    if ($q_harga->num_rows() == 0) {
-        return;
-    }
-
-    $harga_unit = (int) $q_harga->row()->nominal_dp;
-
-    // 2️⃣ Total DP dibayar
-    $q_total = $this->db->query("
-        SELECT SUM(nominal) AS total_dp
-        FROM transaksi
-        WHERE id_trans_denahs = ?
-        AND status_trans = 'DP'
-    ", [$id_trans_denahs]);
-
-    $total_dp = (int) $q_total->row()->total_dp;
-
-    // 3️⃣ Jika LUNAS → UPDATE DENAH
-    if ($total_dp >= $harga_unit && $harga_unit > 0) {
-
-        // UPDATE DENAH (BERDASARKAN CODE)
-        $this->db->where('code', $id_trans_denahs);
-        $this->db->update('denahs', [
-            'type'       => 'Sold Out',
-            'color'      => 'yellow',
-            'tgl_update' => date('d/m/Y | H:i:s'),
-            'user_admin' => $user_admin
-        ]);
-
-        // DEBUG HARD (jika masih gagal)
-        if ($this->db->affected_rows() == 0) {
-            log_message('error', 'GAGAL UPDATE SOLD OUT | CODE: '.$id_trans_denahs);
-        }
-
-        // INSERT TRANSAKSI SOLD OUT JIKA BELUM ADA
-        $cek_so = $this->db->query("
-            SELECT id_trans
-            FROM transaksi
+        // ==================================================
+        // SIMPAN / UPDATE TRANSAKSI
+        // ==================================================
+        $q_exist = $this->db->query("
+            SELECT * FROM transaksi
             WHERE id_trans_denahs = ?
-            AND status_trans = 'Sold Out'
-        ", [$id_trans_denahs]);
+            AND status_trans = ?
+        ", [$id_trans_denahs, $status_trans]);
 
-        if ($cek_so->num_rows() == 0) {
+        if ($q_exist->num_rows() > 0) {
+
+            $tahap = $q_exist->num_rows() + 1;
+            $row   = $q_exist->row();
+
+            // ===============================
+            // UPDATE UTJ
+            // ===============================
+            if ($status_trans == 'UTJ') {
+
+                $this->db->where('id_trans', $row->id_trans);
+                $this->db->update('transaksi', [
+                    'tgl_trans'  => $tgl_trans,
+                    'nominal'    => $nominal,
+                    'user_admin' => $user_admin,
+                    'tgl_update' => $tgl_update
+                ]);
+
+                $id_transaksi_terakhir = $row->id_trans;
+
+            }
+            // ===============================
+            // INSERT TAHAP BERIKUTNYA
+            // ===============================
+            else {
+
+                $this->db->insert('transaksi', [
+                    'id_trans_denahs' => $id_trans_denahs,
+                    'nama_cus'        => $row->nama_cus,
+                    'no_wa'           => $row->no_wa,
+                    'status_trans'    => $status_trans,
+                    'tgl_trans'       => $tgl_trans,
+                    'nominal'         => $nominal,
+                    'nominal_dp'      => $row->nominal_dp,
+                    'tahap'           => 'Tahap '.$tahap,
+                    'user_admin'      => $user_admin,
+                    'tgl_update'      => $tgl_update
+                ]);
+
+                $id_transaksi_terakhir = $this->db->insert_id();
+            }
+
+        }
+        // ===============================
+        // TRANSAKSI PERTAMA
+        // ===============================
+        else {
+
             $this->db->insert('transaksi', [
                 'id_trans_denahs' => $id_trans_denahs,
                 'nama_cus'        => $nama_cus,
                 'no_wa'           => $no_wa,
-                'status_trans'    => 'Sold Out',
-                'tgl_trans'       => date('d/m/Y'),
-                'tahap'           => 'LUNAS',
+                'status_trans'    => $status_trans,
+                'tgl_trans'       => $tgl_trans,
+                'nominal'         => $nominal,
+                'nominal_dp'      => ($status_trans == 'DP') ? $nominal_dp : null,
+                'tahap'           => ($status_trans == 'UTJ') ? 'Lunas' : 'Tahap 1',
                 'user_admin'      => $user_admin,
-                'tgl_update'      => date('d/m/Y | H:i:s')
+                'tgl_update'      => $tgl_update
+            ]);
+
+            $id_transaksi_terakhir = $this->db->insert_id();
+        }
+
+        // ==================================================
+        // 🔑 UPDATE VISIT → SET ID TRANSAKSI
+        // ==================================================
+        if (!empty($id_transaksi_terakhir)) {
+
+            $this->db->where('id_blok', $id_trans_denahs);
+            $this->db->update('visit', [
+                'id_transaksi' => $id_transaksi_terakhir
             ]);
         }
-    }
-}
 
+        // ==================================================
+        // CEK DP LUNAS → SOLD OUT
+        // ==================================================
+
+        // 1️⃣ Ambil harga unit dari DP pertama
+        $q_harga = $this->db->query("
+            SELECT nominal_dp
+            FROM transaksi
+            WHERE id_trans_denahs = ?
+            AND nominal_dp IS NOT NULL
+            ORDER BY id_trans ASC
+            LIMIT 1
+        ", [$id_trans_denahs]);
+
+        if ($q_harga->num_rows() == 0) {
+            return;
+        }
+
+        $harga_unit = (int) $q_harga->row()->nominal_dp;
+
+        // 2️⃣ Total DP dibayar
+        $q_total = $this->db->query("
+            SELECT SUM(nominal) AS total_dp
+            FROM transaksi
+            WHERE id_trans_denahs = ?
+            AND status_trans = 'DP'
+        ", [$id_trans_denahs]);
+
+        $total_dp = (int) $q_total->row()->total_dp;
+
+        // 3️⃣ Jika LUNAS → UPDATE DENAH
+        if ($total_dp >= $harga_unit && $harga_unit > 0) {
+
+            $this->db->where('code', $id_trans_denahs);
+            $this->db->update('denahs', [
+                'type'       => 'Sold Out',
+                'color'      => 'yellow',
+                'tgl_update' => date('d/m/Y | H:i:s'),
+                'user_admin' => $user_admin
+            ]);
+
+            // INSERT SOLD OUT JIKA BELUM ADA
+            $cek_so = $this->db->query("
+                SELECT id_trans
+                FROM transaksi
+                WHERE id_trans_denahs = ?
+                AND status_trans = 'Sold Out'
+            ", [$id_trans_denahs]);
+
+            if ($cek_so->num_rows() == 0) {
+
+                $this->db->insert('transaksi', [
+                    'id_trans_denahs' => $id_trans_denahs,
+                    'nama_cus'        => $nama_cus,
+                    'no_wa'           => $no_wa,
+                    'status_trans'    => 'Sold Out',
+                    'tgl_trans'       => date('d/m/Y'),
+                    'tahap'           => 'LUNAS',
+                    'user_admin'      => $user_admin,
+                    'tgl_update'      => date('d/m/Y | H:i:s')
+                ]);
+            }
+        }
+    }
 
     function delete_data_transaksi()
     {

@@ -3,7 +3,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Progres_model extends CI_Model
 {
-    public function get_unit_pro($limit = 12, $start = 0, $search = '')
+    public function get_unit_pro($limit = 12, $start = 0, $search = '', $id_agent)
     {
         if ($start < 0) $start = 0;
 
@@ -11,29 +11,28 @@ class Progres_model extends CI_Model
             unit_progres.id_unit AS id_unit_progres,
             unit_progres.ukuran AS ukuran_denah,
             unit_progres.type AS type_unit,
-
             denahs.code,
-
             MAX(tbl_progress_unit.persen) AS persen
         ');
 
         $this->db->from('unit_progres');
         $this->db->join('denahs','denahs.id_denahs = unit_progres.id_denahs','left');
-
-        // ✅ JOIN BENAR
         $this->db->join(
             'tbl_progress_unit',
             'tbl_progress_unit.id_unit = unit_progres.id_unit',
             'left'
         );
 
+        // 🔥 LOGIKA FINAL
+        if ($id_agent !== 0) {
+            $this->db->where('unit_progres.id_agent', $id_agent);
+        }
+
         if (!empty($search)) {
             $this->db->like('denahs.code', $search);
         }
 
-        // 🔒 penting: GROUP BY unit
         $this->db->group_by('unit_progres.id_unit');
-
         $this->db->order_by('unit_progres.id_unit','ASC');
         $this->db->limit($limit,$start);
 
@@ -43,10 +42,17 @@ class Progres_model extends CI_Model
     // ===============================
     // HITUNG TOTAL DATA
     // ===============================
-    public function count_unit($search = '')
+    public function count_unit($search = '', $id_agent)
     {
         $this->db->from('unit_progres');
-        $this->db->join('denahs','denahs.id_denahs = unit_progres.id_denahs','left');
+        $this->db->join(
+            'denahs',
+            'denahs.id_denahs = unit_progres.id_denahs',
+            'left'
+        );
+
+        // 🔒 FILTER AGENT
+        $this->db->where('unit_progres.id_agent', $id_agent);
 
         if (!empty($search)) {
             $this->db->like('denahs.code', $search);
@@ -54,7 +60,6 @@ class Progres_model extends CI_Model
 
         return $this->db->count_all_results();
     }
-
 
     public function get_tahap()
     {

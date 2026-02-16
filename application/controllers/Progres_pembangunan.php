@@ -20,6 +20,7 @@ class Progres_pembangunan extends AUTH_Controller
     public function index()
 
     {
+        $data['userdata'] = $this->session->userdata('userdata');
         $id                     = $this->session->userdata('userdata')->id;
         $role                   = $this->session->userdata('userdata')->role;
         $data['perumahan']      = $this->M_admin->m_perumahan($id, $role);
@@ -40,6 +41,8 @@ class Progres_pembangunan extends AUTH_Controller
         $limit  = (int)$this->input->post('limit');
         $start  = (int)$this->input->post('start');
         $search = $this->input->post('search');
+        $user     = $this->session->userdata('userdata');
+        $id_agent = (int)$user->id;
 
         // ===============================
         // Validasi Pagination
@@ -55,8 +58,8 @@ class Progres_pembangunan extends AUTH_Controller
         // ===============================
         // Ambil Data
         // ===============================
-        $data = $this->Progres_model->get_unit_pro($limit, $start, $search);
-        $total_data = $this->Progres_model->count_unit($search);
+        $data = $this->Progres_model->get_unit_pro($limit, $start, $search, $id_agent);
+        $total_data = $this->Progres_model->count_unit($search, $id_agent);
         $total_pages = ceil($total_data / $limit);
 
         // ===============================
@@ -162,6 +165,7 @@ class Progres_pembangunan extends AUTH_Controller
 
     public function detail($id_unit)
     {
+        $data['userdata'] = $this->session->userdata('userdata');
         $id   = $this->session->userdata('userdata')->id;
         $role = $this->session->userdata('userdata')->role;
         $data['area_siteplan']  = $this->M_admin->m_area_siteplan();
@@ -177,6 +181,22 @@ class Progres_pembangunan extends AUTH_Controller
         $this->load->view($this->template, $data);
     }
 
+    public function get_minggu_terpakai()
+    {
+        $id_unit = $this->input->post('id_unit');
+
+        $minggu = $this->db
+            ->select('minggu_ke')
+            ->from('tbl_progress_unit')
+            ->where('id_unit', $id_unit)
+            ->where('minggu_ke IS NOT NULL')
+            ->group_by('minggu_ke')
+            ->get()
+            ->result_array();
+
+        echo json_encode(array_column($minggu, 'minggu_ke'));
+    }
+
     public function simpan_progress()
     {
         $id_pembuat  = $this->session->userdata('userdata')->id;
@@ -185,6 +205,18 @@ class Progres_pembangunan extends AUTH_Controller
         $id_tahap    = $this->input->post('id_tahap', true);
         $deskripsi   = $this->input->post('deskripsi', true);
         $minggu      = $this->input->post('pekan', true);
+        $start_date = $this->input->post('start_date', true);
+        $end_date   = $this->input->post('end_date', true);
+
+
+        // ================= VALIDASI datepicker =================
+        if ($start_date && $end_date && $end_date < $start_date) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'End date tidak boleh lebih kecil dari start date'
+            ]);
+            return;
+        }
 
         // ================= VALIDASI INPUT =================
         if (!$id_unit || !$id_tahap || !$minggu) {
@@ -235,6 +267,8 @@ class Progres_pembangunan extends AUTH_Controller
             'deskripsi'  => $deskripsi,
             'persen'     => $tahap->persen_target,
             'minggu_ke'  => $minggu,
+            'start_date' => $start_date,
+            'end_date'   => $end_date,
             'created_at' => date('Y-m-d H:i:s'),
             'created_by' => $id_pembuat
 
@@ -255,52 +289,89 @@ class Progres_pembangunan extends AUTH_Controller
         }
 
         // ================= UPLOAD MULTI FILE =================
-        $this->load->library('upload');
+$this->load->library(['upload','image_lib']);
 
-        $files = $_FILES['foto_progres'];
-        $count = count($files['name']);
+    $files = $_FILES['foto_progres'];
+    $count = count($files['name']);
+    $uploadedFiles = [];
 
-        for ($i = 0; $i < $count; $i++) {
+    for ($i = 0; $i < $count; $i++) {
 
-            $_FILES['file']['name']     = $files['name'][$i];
-            $_FILES['file']['type']     = $files['type'][$i];
-            $_FILES['file']['tmp_name'] = $files['tmp_name'][$i];
-            $_FILES['file']['error']    = $files['error'][$i];
-            $_FILES['file']['size']     = $files['size'][$i];
+        $_FILES['file']['name']     = $files['name'][$i];
+        $_FILES['file']['type']     = $files['type'][$i];
+        $_FILES['file']['tmp_name'] = $files['tmp_name'][$i];
+        $_FILES['file']['error']    = $files['error'][$i];
+        $_FILES['file']['size']     = $files['size'][$i];
 
-            $config = [
-                'upload_path'   => $uploadPath,
-                'allowed_types' => 'jpg|jpeg|png',
-                'max_size'      => 1024,
-                'encrypt_name'  => true
+        $config = [
+            'upload_path'   => $uploadPath,
+            'allowed_types' => 'jpg|jpeg|png',
+            'encrypt_name'  => true,
+            'max_size'      => 5120 // allow up to 5MB before compress
+        ];
+
+        $this->upload->initialize($config);
+
+        if (!$this->upload->do_upload('file')) {
+            $this->db->trans_rollback();
+            echo json_encode([
+                'status'=>'error',
+                'message'=>$this->upload->display_errors()
+            ]);
+            return;
+        }
+
+        $uploadData = $this->upload->data();
+        $fullPath   = $uploadData['full_path'];
+
+        // ================= COMPRESS IMAGE =================
+        $configImage = [
+            'image_library'  => 'gd2',
+            'source_image'   => $fullPath,
+            'maintain_ratio' => TRUE,
+            'quality'        => '70%',   // 🔥 quality jpeg
+            'width'          => 1600,    // max width
+            'height'         => 1600
+        ];
+
+        $this->image_lib->initialize($configImage);
+        $this->image_lib->resize();
+        $this->image_lib->clear();
+
+        // 🔥 LOOP UNTUK PAKSA < 1MB
+        $quality = 70;
+        while (filesize($fullPath) > 1000000 && $quality > 30) {
+
+            $configImage = [
+                'image_library' => 'gd2',
+                'source_image'  => $fullPath,
+                'quality'       => $quality.'%'
             ];
 
-            $this->upload->initialize($config);
+            $this->image_lib->initialize($configImage);
+            $this->image_lib->resize();
+            $this->image_lib->clear();
 
-            if (!$this->upload->do_upload('file')) {
-                $this->db->trans_rollback();
-                echo json_encode([
-                    'status'=>'error',
-                    'message'=>$this->upload->display_errors()
-                ]);
-                return;
-            }
-
-            $uploadData = $this->upload->data();
-
-            $this->db->insert('tbl_progress_foto', [
-                'id_progres' => $id_progress,
-                'file_foto'  => $uploadData['file_name']
-            ]);
+            $quality -= 10;
         }
+
+        $uploadedFiles[] = $uploadData['file_name'];
+
+        $this->db->insert('tbl_progress_foto', [
+            'id_progres' => $id_progress,
+            'file_foto'  => $uploadData['file_name']
+        ]);
+    }
 
         // ================= COMMIT / ROLLBACK =================
         if ($this->db->trans_status() === FALSE) {
 
             $this->db->trans_rollback();
 
-            if (file_exists($uploadPath . $nama_foto)) {
-                unlink($uploadPath . $nama_foto);
+            foreach ($uploadedFiles as $file) {
+                if (file_exists($uploadPath . $file)) {
+                    unlink($uploadPath . $file);
+                }
             }
 
             echo json_encode([

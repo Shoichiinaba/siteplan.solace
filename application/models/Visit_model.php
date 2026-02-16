@@ -140,6 +140,21 @@ class Visit_model extends CI_Model
 		return $this->db->update($table, $data);
     }
 
+    public function get_unit_progres($id_denahs)
+    {
+        return $this->db
+            ->where('id_denahs', $id_denahs)
+            ->get('unit_progres')
+            ->row();
+    }
+
+    public function update_unit_progres($data_unitpro, $id_denahs)
+    {
+        return $this->db
+            ->where('id_denahs', $id_denahs)
+            ->update('unit_progres', $data_unitpro);
+    }
+
     function update_denah($table, $data, $id_denahs)
     {
         $this->db->where('id_denahs', $id_denahs);
@@ -170,5 +185,28 @@ class Visit_model extends CI_Model
 
         return $result;
     }
+
+    public function get_customer_by_visit($id_visit)
+
+    {
+        return $this->db
+            ->where('id_visit_account', $id_visit)
+            ->get('customer_account')
+            ->row();
+    }
+
+    public function insert_customer_account($data)
+
+    {
+        return $this->db->insert('customer_account', $data);
+    }
+
+    public function update_customer_account($data, $id_visit)
+    {
+        return $this->db
+            ->where('id_visit_account', $id_visit)
+            ->update('customer_account', $data);
+    }
+
 
 }

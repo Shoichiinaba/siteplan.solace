@@ -2,96 +2,128 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 
 class Customer_acount_model extends CI_Model
- {
-        // start datatables
-        var $column_order = array(null, 'nama', 'email', 'telepon', 'jml_input');
-        var $column_search = array('customer_account.nama', 'email', 'telepon');
-        var $order = array('id' => 'asc');
+{
+    // start datatables
+    var $column_order  = array(null, 'nama', 'email', 'telepon', 'jml_input');
+    var $column_search = array('customer_account.nama', 'email', 'telepon');
+    var $order         = array('id' => 'desc');
 
-    private function _get_datatables_query($role, $id) {
+    private function _get_datatables_query($role, $id)
+    {
+        if ($role == 'Admin') {
 
-    if ($role == 'Admin') {
+            $this->db->select('
+                customer_account.*,
+                customer_account.nama AS nama_cus,
+                perumahan.nama AS nama_perum
+            ');
+            $this->db->from('customer_account');
+            $this->db->join('visit', 'visit.id_visit = customer_account.id_visit_account');
+            $this->db->join('marketing_perum', 'marketing_perum.id_admin_marketing = visit.id_marketing');
+            $this->db->join('perumahan', 'perumahan.id_perum = marketing_perum.id_perum_marketing');
+            $this->db->order_by('id', 'desc');
 
-        $this->db->select('customer_account.*, customer_account.nama AS nama_cus, perumahan.nama AS nama_perum');
-        $this->db->from('customer_account');
-        $this->db->join('visit', 'visit.id_visit = customer_account.id_visit_account');
-        $this->db->join('marketing_perum', 'marketing_perum.id_admin_marketing = visit.id_marketing');
-        $this->db->join('perumahan', 'perumahan.id_perum = marketing_perum.id_perum_marketing');
-        $this->db->order_by('id', 'desc');
+        }
+        else if ($role == 'Marketing') {
 
+            $this->db->select('
+                customer_account.*,
+                customer_account.nama AS nama_cus,
+                perumahan.nama AS nama_perum
+            ');
+            $this->db->from('customer_account');
+            $this->db->join('visit', 'visit.id_visit = customer_account.id_visit_account');
+
+            // 🔑 FILTER MARKETING
+            $this->db->where('visit.id_marketing', $id);
+            $this->db->where('visit.id_transaksi !=', 0);
+
+            // OPTIONAL: kalau tetap mau ambil nama perum
+            $this->db->join('marketing_perum', 'marketing_perum.id_admin_marketing = visit.id_marketing', 'left');
+            $this->db->join('perumahan', 'perumahan.id_perum = marketing_perum.id_perum_marketing', 'left');
+
+            $this->db->order_by('id', 'desc');
+        }
+
+        // SEARCH
         $i = 0;
         foreach ($this->column_search as $item) {
-            if(@$_POST['search']['value']) {
-                if($i===0) {
+            if (@$_POST['search']['value']) {
+                if ($i === 0) {
                     $this->db->group_start();
                     $this->db->like($item, $_POST['search']['value']);
                 } else {
                     $this->db->or_like($item, $_POST['search']['value']);
                 }
-                if(count($this->column_search) - 1 == $i)
+                if (count($this->column_search) - 1 == $i) {
                     $this->db->group_end();
+                }
             }
             $i++;
         }
 
-        if(isset($_POST['order'])) {
-            $this->db->order_by($this->column_order[$_POST['order']['0']['column']], $_POST['order']['0']['dir']);
-        }  else if(isset($this->order)) {
+        // ORDER
+        if (isset($_POST['order'])) {
+            $this->db->order_by(
+                $this->column_order[$_POST['order'][0]['column']],
+                $_POST['order'][0]['dir']
+            );
+        } else if (isset($this->order)) {
             $order = $this->order;
             $this->db->order_by(key($order), $order[key($order)]);
         }
+    }
 
-    } else if ($role == 'Marketing') {
-
-        $this->db->select('customer_account.*, customer_account.nama AS nama_cus, perumahan.nama AS nama_perum');
-        $this->db->from('customer_account');
-        $this->db->join('marketing_perum', 'marketing_perum.id_perum_marketing = customer.id_perum');
-        $this->db->join('perumahan', 'perumahan.id_perum = customer.id_perum');
-        $this->db->where('marketing_perum.id_admin_marketing', $id);
-        $this->db->order_by('id_customer', 'desc');
-
-            $i = 0;
-            foreach ($this->column_search as $item) {
-                if(@$_POST['search']['value']) {
-                    if($i===0) {
-                        $this->db->group_start();
-                        $this->db->like($item, $_POST['search']['value']);
-                    } else {
-                        $this->db->or_like($item, $_POST['search']['value']);
-                    }
-                    if(count($this->column_search) - 1 == $i)
-                        $this->db->group_end();
-                }
-                $i++;
-            }
-
-            if(isset($_POST['order'])) {
-                $this->db->order_by($this->column_order[$_POST['order']['0']['column']], $_POST['order']['0']['dir']);
-            }  else if(isset($this->order)) {
-                $order = $this->order;
-                $this->db->order_by(key($order), $order[key($order)]);
-            }
+    function get_datatables($role, $id)
+    {
+        $this->_get_datatables_query($role, $id);
+        if (@$_POST['length'] != -1) {
+            $this->db->limit(@$_POST['length'], @$_POST['start']);
         }
+        return $this->db->get()->result();
     }
 
-    function get_datatables($role, $id) {
+    function count_filtered($role, $id)
+    {
         $this->_get_datatables_query($role, $id);
-        if(@$_POST['length'] != -1)
-        $this->db->limit(@$_POST['length'], @$_POST['start']);
-        $query = $this->db->get();
-        return $query->result();
+        return $this->db->get()->num_rows();
     }
 
-    function count_filtered($role, $id) {
-        $this->_get_datatables_query($role, $id);
-        $query = $this->db->get();
-        return $query->num_rows();
-    }
-
-    function count_all($role, $id) {
+    function count_all($role, $id)
+    {
         $this->_get_datatables_query($role, $id);
         return $this->db->count_all_results();
     }
     // end datatables
 
+    public function count_account_kosong($role, $id_marketing)
+    {
+        $this->db->from('customer_account');
+        $this->db->join('visit', 'visit.id_visit = customer_account.id_visit_account');
+
+        // FILTER MARKETING (jika bukan Admin)
+        if ($role == 'Marketing') {
+            $this->db->where('visit.id_marketing', $id_marketing);
+        }
+
+        // CEK DATA KOSONG
+        $this->db->group_start();
+            $this->db->where("(customer_account.username IS NULL OR customer_account.username = '')", NULL, FALSE);
+            $this->db->or_where("(customer_account.email IS NULL OR customer_account.email = '')", NULL, FALSE);
+            $this->db->or_where("(customer_account.password IS NULL OR customer_account.password = '')", NULL, FALSE);
+        $this->db->group_end();
+
+        return $this->db->count_all_results();
+    }
+
+    public function get_customer_by_id($id_customer) {
+        $this->db->where('id', $id_customer);
+        $query = $this->db->get('customer_account');
+        return $query->row();
+    }
+
+    public function update_customer($id_customer, $data) {
+        $this->db->where('id', $id_customer);
+        $this->db->update('customer_account', $data);
+    }
 }

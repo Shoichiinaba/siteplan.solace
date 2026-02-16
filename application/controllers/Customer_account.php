@@ -25,6 +25,7 @@ class Customer_account extends AUTH_Controller
     public function index()
 
     {
+        $data['userdata'] = $this->session->userdata('userdata');
         $id = $this->session->userdata('userdata')->id;
         $role = $this->session->userdata('userdata')->role;
         $data['perumahan'] = $this->M_admin->m_perumahan($id, $role);
@@ -43,6 +44,25 @@ class Customer_account extends AUTH_Controller
         $no = @$_POST['start'];
         foreach ($list as $cus) {
 
+            $editButton = '
+                            <button type="button"
+                                class="btn bg-gradient-info btn-xs rounded-4 btn-edit"
+                                data-bs-toggle="modal"
+                                data-bs-target="#edit-customer"
+                                data-id="' . $cus->id .'"
+                                data-id_visit="'. $cus->id_visit_account.'"
+                                data-nama="'. htmlspecialchars($cus->nama_cus, ENT_QUOTES, 'UTF-8') .'"
+                                data-email="'. htmlspecialchars($cus->email, ENT_QUOTES, 'UTF-8') .'"
+                                data-domisili="'. htmlspecialchars($cus->domisili, ENT_QUOTES, 'UTF-8') .'"
+                                data-username="'. htmlspecialchars($cus->username, ENT_QUOTES, 'UTF-8') .'"
+                                data-telepon="'. htmlspecialchars($cus->telepon, ENT_QUOTES, 'UTF-8') .'"
+                                data-dibuat="'. htmlspecialchars($cus->dibuat, ENT_QUOTES, 'UTF-8') .'"
+                                data-perum="'. htmlspecialchars($cus->nama_perum, ENT_QUOTES, 'UTF-8') .'"
+                                data-foto="'. $cus->foto_profil .'">
+                                <i class="fa fa-pencil"></i>
+                            </button>
+                        ';
+
             $no++;
             $row = array();
             $row[] = $no.".";
@@ -51,9 +71,9 @@ class Customer_account extends AUTH_Controller
             $row[] = $cus->domisili;
             $row[] = $cus->telepon;
             $row[] = date("d-m-Y", strtotime($cus->dibuat));
-            // $row[] = $cus->jam;
             $row[] = $cus->nama_perum;
-            // $row[] = $cus->jml_input;
+            $row[] = $editButton;
+
 
             $data[] = $row;
         }
@@ -67,355 +87,86 @@ class Customer_account extends AUTH_Controller
         echo json_encode($output);
     }
 
-    function customer_visit()
+    public function update_customer()
     {
-        $id = $this->session->userdata('userdata')->id;
-        $role = $this->session->userdata('userdata')->role;
+        $id_customer = $this->input->post('id');
 
-        $data['userdata'] 		= $this->userdata;
-        $data['perumahan']      = $this->M_admin->m_perumahan($id, $role);
-        $data['marketing']      = $this->M_admin->get_data_admin();
-        $data['area_siteplan']  = $this->M_admin->m_area_siteplan();
-        $data['bread']          = 'Data Surve';
-        // var_dump($data['kapling']);
-        $data['content']        = 'page/customer/form_surve';
-        $this->load->view($this->template, $data);
-    }
+        $current_customer = $this->Customer_acount_model->get_customer_by_id($id_customer);
+        $old_foto_profil  = !empty($current_customer->foto_profil) ? $current_customer->foto_profil : '';
 
-    function customer_lead()
-
-    {
-        $id = $this->session->userdata('userdata')->id;
-        $role = $this->session->userdata('userdata')->role;
-
-        $data['userdata'] 		= $this->userdata;
-        $data['perumahan']      = $this->M_admin->m_perumahan($id, $role);
-        $data['marketing']      = $this->M_admin->get_data_admin();
-        $data['area_siteplan']  = $this->M_admin->m_area_siteplan();
-        $data['bread']          = 'Data Surve';
-        $data['content']        = 'page/customer/form_lead';
-        $this->load->view($this->template, $data);
-    }
-
-    public function get_kapling_options()
-    {
-        $id_perum = $this->input->post('unit');
-        $kaplingOptions = $this->Visit_model->get_kapling($id_perum);
-
-        foreach ($kaplingOptions as $kapling) {
-            echo '<option value="'.$kapling->id_denahs.'">'.$kapling->code.'</option>';
-        }
-    }
-
-    function get_customer_lead() {
-        $role = $this->session->userdata('userdata')->role;
-        $id = $this->session->userdata('userdata')->id;
-        $fil_unit = $this->input->post('fil_unit');
-        $fil_kategori = $this->input->post('fil_kategori');
-        $fil_sumber = $this->input->post('fil_sumber');
-        $fil_daterange = $this->input->post('fil_daterange');
-        $fil_marketing = $this->input->post('fil_marketing');
-
-        // ambil SEMUA baris (tanpa pagination) agar grouping/filter di PHP bekerja terhadap seluruh set
-        $list = $this->Lead_model->get_datatableslead($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing, false);
-
-
-        // 1️⃣ Kelompokkan berdasarkan nama
-        $grouped = [];
-        foreach ($list as $cus) {
-            $key = strtolower(trim($cus->nama_visit));
-            if (!isset($grouped[$key])) {
-                $grouped[$key] = [];
-            }
-            $grouped[$key][] = $cus;
-        }
-
-        // 2️⃣ Filter logika: jika ada kategori "Sudah Survey" → skip nama tsb
-        $filtered = [];
-        foreach ($grouped as $nama => $rows) {
-            $hasSudahSurvey = false;
-
-            foreach ($rows as $r) {
-
-                // Normalisasi kategori: hilangkan karakter tak terlihat dan buat lowercase
-                $kategori = strtolower($r->kategori ?? '');
-                $kategori = preg_replace('/[\x00-\x1F\x7F\xA0]/u', '', $kategori);
-                $kategori = trim(preg_replace('/\s+/', ' ', $kategori)); // ubah semua spasi jadi 1 spasi
-
-                // Gunakan "contains" agar lebih toleran
-                if (strpos($kategori, 'sudah survey') !== false) {
-                    $hasSudahSurvey = true;
-                    break;
-                }
-            }
-
-            // Jika ada data "Sudah Survey", lewati semua nama ini
-            if ($hasSudahSurvey) continue;
-
-            // Ambil id_visit terbesar (data terakhir)
-            usort($rows, fn($a, $b) => (int)$b->id_visit <=> (int)$a->id_visit);
-            $filtered[] = $rows[0];
-        }
-
-        // 3️⃣ Bangun data untuk output
-        $data = [];
-        $no = @$_POST['start'];
-        foreach ($filtered as $cus) {
-            $no++;
-
-            $text = 'Halo Kak ' . $cus->nama_visit . ', Mengenai Hasil ' . $cus->hasil_fu .
-                    ', Pada Tanggal ' . $cus->tanggal .
-                    ', Apakah ada rencana lagi untuk Survey?';
-            $wa = 'https://api.whatsapp.com/send?phone=62' . $cus->no_tlp . '&text=' . rawurlencode($text);
-            $whatsappBtn = '<a href="' . $wa . '" class="btn bg-gradient-success btn-xs rounded-4" target="_blank"><i class="fa fa-whatsapp"></i></a>';
-
-            $editBtn = '&nbsp;<button type="button" class="btn bg-gradient-info btn-xs rounded-4 btn-edit"
-                data-bs-toggle="modal" data-bs-target="#edit-data"
-                data-id="' . $cus->id_visit . '"
-                data-nama="' . htmlentities($cus->nama_visit) . '"
-                data-tanggal="' . $cus->tanggal . '"
-                data-no_tlp="' . $cus->no_tlp . '"
-                data-unit="' . $cus->unit . '"
-                data-kategori="' . $cus->kategori . '"
-                data-keterangan="' . $cus->keterangan . '"
-                data-sumber="' . $cus->sumber . '"
-                data-hasil_fu="' . $cus->hasil_fu . '"
-                onclick="sendUnitToController(\'' . $cus->unit . '\')"><i class="fa fa-pencil"></i></button>';
-
-            $row = [];
-            $row[] = $no . '.';
-            if ($role !== 'Marketing') $row[] = $cus->nama_marketing;
-            $row[] = $cus->nama_visit;
-            $row[] = $cus->tanggal;
-            $row[] = $cus->no_tlp;
-            $row[] = $cus->nama_perum;
-            $row[] = $cus->kategori;
-            $row[] = $cus->keterangan;
-            $row[] = $cus->sumber;
-            $row[] = $cus->hasil_fu;
-            $row[] = $whatsappBtn . $editBtn;
-            $data[] = $row;
-        }
-
-        // 4️⃣ Output ke DataTables
-        $output = [
-            "draw" => @$_POST['draw'],
-            "recordsTotal" => $this->Lead_model->count_alllead($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing),
-            "recordsFiltered" => $this->Lead_model->count_filteredlead($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing),
-            "data" => $data
-        ];
-
-        echo json_encode($output);
-    }
-
-    function get_customer_visit() {
-        $role = $this->session->userdata('userdata')->role;
-        $id = $this->session->userdata('userdata')->id;
-        $fil_unit = $this->input->post('fil_unit');
-        $fil_kategori = $this->input->post('fil_kategori');
-        $fil_sumber = $this->input->post('fil_sumber');
-        $fil_daterange = $this->input->post('fil_daterange');
-        $fil_marketing = $this->input->post('fil_marketing');
-
-        $list = $this->Visit_model->get_datatablesvisit($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing);
-        $data = array();
-        $no = @$_POST['start'];
-
-        foreach ($list as $cus) {
-            // tombol WA
-            $whatsappUrl = 'https://api.whatsapp.com/send?phone=62' . $cus->no_tlp .
-                '&text=Halo%20Kak%20' . $cus->nama_visit .
-                ',%20Mengenai%20hasil%20' . $cus->hasil_fu .
-                ',%20pada%20tanggal%20' . $cus->tanggal .
-                ',%20apakah%20ada%20rencana%20lagi%20untuk%20survey%3F%0A';
-
-            $whatsappButton = '<a href="' . $whatsappUrl . '" class="btn bg-gradient-success btn-xs rounded-4" data-bs-toggle="tooltip" title="Chat via WhatsApp" target="_blank">
-                                    <i class="fa fa-whatsapp"></i>
-                            </a>';
-
-            // tombol edit hanya muncul jika kategori BUKAN UTJ
-            $editButton = '';
-            if (strtoupper($cus->kategori) != 'UTJ') {
-                $editButton = '&nbsp; <button type="button" class="btn bg-gradient-info btn-xs rounded-4 btn-edit"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#edit-data"
-                                    data-id="' . $cus->id_visit . '"
-                                    data-nama="' . $cus->nama_visit . '"
-                                    data-tanggal="' . $cus->tanggal . '"
-                                    data-no_tlp="' . $cus->no_tlp . '"
-                                    data-unit="' . $cus->unit . '"
-                                    data-kategori="' . $cus->kategori . '"
-                                    data-keterangan="' . $cus->keterangan . '"
-                                    data-sumber="' . $cus->sumber . '"
-                                    data-hasil_fu="' . $cus->hasil_fu . '"
-                                    onclick="sendUnitToController(\'' . $cus->unit . '\')">
-                                    <i class="fa fa-pencil"></i>
-                                </button>';
-            }
-
-            $no++;
-            $row = array();
-            $row[] = $no . ".";
-
-            if ($role !== 'Marketing') {
-                $row[] = $cus->nama_marketing;
-            }
-
-            $row[] = $cus->nama_visit;
-            $row[] = $cus->tanggal;
-            $row[] = $cus->no_tlp;
-            $row[] = $cus->nama_perum;
-            $row[] = $cus->kategori;
-            $row[] = $cus->keterangan;
-            $row[] = $cus->sumber;
-            $row[] = $cus->hasil_fu;
-            $row[] = $whatsappButton . $editButton;
-
-            $data[] = $row;
-        }
-
-        $output = array(
-            "draw" => @$_POST['draw'],
-            "recordsTotal" => $this->Visit_model->count_allvisit($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing),
-            "recordsFiltered" => $this->Visit_model->count_filteredvisit($role, $id, $fil_unit, $fil_kategori, $fil_sumber, $fil_daterange, $fil_marketing),
-            "data" => $data,
-        );
-
-        echo json_encode($output);
-    }
-
-    function input_lead()
-    {
         $data = array(
-            'id_marketing' => $this->input->post('id_marketing'),
-            'nama' => $this->input->post('nama'),
-            'tanggal' => $this->input->post('tanggal'),
-            'no_tlp' => $this->input->post('no_tlp'),
-            'unit' => $this->input->post('unit'),
-            'kategori' => $this->input->post('kategori'),
-            'keterangan' => $this->input->post('keterangan'),
-            'sumber' => $this->input->post('sumber'),
-            'hasil_fu' => $this->input->post('hasil_fu')
+            'nama'     => $this->input->post('nama_customer'),
+            'email'    => $this->input->post('email'),
+            'telepon'  => $this->input->post('no_tlp'),
+            'username' => $this->input->post('username'),
+            'domisili' => $this->input->post('domisili'),
+            'diubah'   => date('Y-m-d H:i:s')
         );
 
-        $result = $this->Lead_model->save_lead($data);
-
-        if ($result) {
-            $response = array('status' => 'success', 'message' => 'Data berhasil disimpan.');
-        } else {
-            $response = array('status' => 'error', 'message' => 'Gagal menyimpan data.');
+        // Password opsional
+        if ($this->input->post('password')) {
+            $data['password'] = password_hash($this->input->post('password'), PASSWORD_BCRYPT);
         }
 
-        echo json_encode($response);
-    }
+        // =============================
+        // UPLOAD FOTO (JIKA ADA)
+        // =============================
+        if (!empty($_FILES['foto_profil']['name'])) {
 
-    public function edit_data()
-    {
-        $id = $this->input->post('id');
+            $config['upload_path']   = './upload/foto_customer/';
+            $config['allowed_types'] = 'jpg|jpeg|png';
+            $config['file_name']     = 'profile_' . time();
+            $config['max_size']      = 5120;
 
-        if (empty($id)) {
-            echo json_encode([
-                'status' => false,
-                'message' => 'ID tidak valid. Data tidak dapat diperbarui.'
-            ]);
-            return;
-        }
+            $this->load->library('upload', $config);
 
-        $data = [
-            'id_marketing' => $this->input->post('id_marketing'),
-            'nama'        => $this->input->post('nama'),
-            'tanggal'     => $this->input->post('tanggal'),
-            'no_tlp'      => $this->input->post('no_tlp'),
-            'unit'        => $this->input->post('unit'),
-            'kategori'    => $this->input->post('kategori'),
-            'keterangan'  => $this->input->post('keterangan'),
-            'sumber'      => $this->input->post('sumber'),
-            'hasil_fu'    => $this->input->post('hasil_fu')
-        ];
+            if ($this->upload->do_upload('foto_profil')) {
 
-        $update_status = $this->Lead_model->update_data('visit', $data, $id);
+                $upload_data = $this->upload->data();
+                $full_path   = $upload_data['full_path'];
+                $new_file    = $upload_data['file_name'];
 
-        if ($update_status) {
-            $response = [
-                'status'  => true,
-                'message' => 'Data berhasil diperbarui.'
-            ];
-        } else {
-            $response = [
-                'status'  => false,
-                'message' => 'Gagal memperbarui data di database.'
-            ];
-        }
+                // Compress
+                $this->load->library('image_lib');
 
-        $this->output
-            ->set_content_type('application/json')
-            ->set_output(json_encode($response));
-    }
+                $compress['image_library']  = 'gd2';
+                $compress['source_image']   = $full_path;
+                $compress['maintain_ratio'] = TRUE;
+                $compress['quality']        = '70%';
+                $compress['width']          = 800;
+                $compress['height']         = 800;
 
-    // update data kunjungan
+                $this->image_lib->initialize($compress);
+                $this->image_lib->resize();
+                $this->image_lib->clear();
 
-    public function edit_kunjungan()
-    {
-        $id = $this->input->post('id');
-        $id_denahs = $this->input->post('code');
-        $nominal = $this->input->post('nominal');
-
-        if (!empty($id)) {
-            $data = array(
-                'id_marketing' => $this->input->post('id_marketing'),
-                'nama' => $this->input->post('nama'),
-                'tanggal' => $this->input->post('tanggal'),
-                'no_tlp' => $this->input->post('no_tlp'),
-                'unit' => $this->input->post('unit'),
-                'kategori' => $this->input->post('kategori'),
-                'keterangan' => $this->input->post('keterangan'),
-                'sumber' => $this->input->post('sumber'),
-                'hasil_fu' => $this->input->post('hasil_fu')
-            );
-
-            $data_denah = array(
-                'type_unit' => $this->input->post('type_unit'),
-                'type' => 'Dipesan',
-                'color' => 'red',
-            );
-
-            $data_trans = array(
-                'id_trans_denahs' => $id_denahs,
-                'nama_cus' => $this->input->post('nama'),
-                'tgl_trans' => $this->input->post('tanggal'),
-                'status_trans' => $this->input->post('kategori'),
-                'no_wa' => $this->input->post('no_tlp'),
-                'nominal' => $this->input->post('nominal'),
-            );
-
-            $update_status = $this->Visit_model->update_data('visit', $data, $id);
-            $update_denah = true;
-
-            if ($update_status) {
-                if (!empty($id_denahs)) {
-                    $update_denah = $this->Visit_model->update_denah('denahs', $data_denah, $id_denahs);
+                // Hapus foto lama
+                if ($old_foto_profil && file_exists('./upload/foto_customer/' . $old_foto_profil)) {
+                    unlink('./upload/foto_customer/' . $old_foto_profil);
                 }
 
-                $result = $this->Visit_model->save_trans($data_trans);
+                $data['foto_profil'] = $new_file;
 
-                if ($result) {
-                    $response['status'] = true;
-                    $response['message'] = 'Data berhasil diperbarui.';
-                } else {
-                    $response['status'] = false;
-                    $response['message'] = 'Gagal menyimpan transaksi.';
-                }
             } else {
-                $response['status'] = false;
-                $response['message'] = 'Gagal memperbarui data di database.';
+                echo json_encode([
+                    'status'  => 'error',
+                    'message' => strip_tags($this->upload->display_errors())
+                ]);
+                return;
             }
+
         } else {
-            $response['status'] = false;
-            $response['message'] = 'ID tidak valid. Data tidak dapat diperbarui.';
+            // Jika tidak upload baru → tetap pakai lama
+            $data['foto_profil'] = $old_foto_profil;
         }
 
-        header('Content-Type: application/json');
-        echo json_encode($response);
+        $this->Customer_acount_model->update_customer($id_customer, $data);
+
+        echo json_encode([
+            'status'  => 'success',
+            'message' => 'Data berhasil diperbarui'
+        ]);
     }
+
 
 }

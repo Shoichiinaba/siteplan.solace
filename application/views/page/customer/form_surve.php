@@ -318,6 +318,8 @@ textarea:focus+label {
                                 <input type="text" id="id-marketing" name="id_marketing" class="col-lg-12"
                                     value="<?php echo $userdata->id; ?>" required hidden>
                                 <input type="text" id="id" name="id" class="col-lg-12" value="" hidden>
+                                <input type="text" id="nama_marketing" name="nama_marketing" class="col-lg-12"
+                                    value="<?php echo $userdata->nama; ?>" hidden>
                             </div>
                         </div>
                     </div>

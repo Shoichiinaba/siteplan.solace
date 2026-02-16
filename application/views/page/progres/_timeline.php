@@ -1,4 +1,8 @@
 <style>
+.flatpickr-calendar {
+    z-index: 9999 !important;
+}
+
 .timeline-wrapper {
     width: 90%;
     margin: auto;
@@ -10,7 +14,7 @@
 
 .timeline-row {
     display: grid;
-    grid-template-columns: 42% 16% 42%;
+    grid-template-columns: 1fr 120px 1fr;
     align-items: stretch;
     margin-bottom: 3px;
 }
@@ -84,8 +88,8 @@
     content: "";
     position: absolute;
     top: 26px;
-    right: -120px;
-    width: calc(50% - 20px);
+    right: -4%;
+    width: 15%;
     border-top: 2px dashed #3f6fd8;
 }
 
@@ -94,11 +98,10 @@
     content: "";
     position: absolute;
     top: 26px;
-    left: -120px;
-    width: calc(50% - 20px);
+    left: -4%;
+    width: 15%;
     border-top: 2px dashed #3f6fd8;
 }
-
 
 .left-step .timeline-left {
     text-align: right;
@@ -116,7 +119,6 @@
 .timeline-left,
 .timeline-right {
     position: relative;
-    min-height: 60px;
 }
 
 .step-title {
@@ -145,7 +147,7 @@
 
 /* LIST PROGRESS STEP KIRI */
 .left-step .timeline-left ul {
-    padding-left: 93px;
+    padding-left: 0px;
     padding-right: 0px;
 }
 
@@ -184,26 +186,15 @@
     width: 100%;
 }
 
-.timeline-item {
-    position: relative;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    /* 🔥 PENTING */
-    gap: 12px;
-    padding: 1px 0 1px 18px;
+.timeline-item-kiri {
+    display: grid;
+    grid-template-columns: 1fr 14px;
+    /* content | bullet */
+    column-gap: 10px;
+    align-items: start;
     width: 100%;
-}
-
-.timeline-item::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 6px;
-    /* sejajar baris pertama */
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
+    padding: 4px 0;
+    text-align: right;
 }
 
 .timeline-date {
@@ -211,14 +202,6 @@
     color: #6c757d;
     white-space: nowrap;
     flex-shrink: 0;
-    line-height: 1.4;
-}
-
-.desc {
-    font-size: 13px;
-    flex: 1;
-    text-align: right;
-    font-weight: 500;
     line-height: 1.4;
 }
 
@@ -243,6 +226,66 @@
     opacity: 0.85;
 }
 
+/* =====================================
+   ITEM KIRI (MIRROR SISI KANAN)
+===================================== */
+
+/* CONTENT */
+.progress-content-kiri {
+    max-width: 100%;
+}
+
+/* BULLET DI KANAN */
+.bullet-kiri {
+    grid-column: 2;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 6px;
+}
+
+/* =============================
+   MINGGU
+============================= */
+.progress-content-kiri .minggu {
+
+    font-weight: 600;
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+/* =============================
+   TANGGAL (beri jarak)
+============================= */
+.tanggal-inline-kiri {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+/* =============================
+   DESKRIPSI (perlebar kanan)
+============================= */
+
+.timeline-item-kiri .progress-row-kiri.deskripsi-kiri {
+    font-size: 13px;
+    line-height: 1.6;
+    font-weight: 600;
+}
+
+/* WARNA BULLET */
+.timeline-item-kiri.progress-new .bullet-kiri {
+    background: #198754;
+}
+
+.timeline-item-kiri.progress-old .bullet-kiri {
+    background: #dc3545;
+}
+
 /* BULLET */
 .progress-new::before {
     background: #198754;
@@ -253,51 +296,79 @@
 }
 
 /* === LIST ITEM KANAN === */
+
 .timeline-item-kanan {
     display: grid;
-    grid-template-columns: 14px auto 1fr;
+    grid-template-columns: 10px 1fr;
+    /* bullet | konten */
+    column-gap: 8px;
     align-items: start;
-    column-gap: 10px;
-    padding: 1px 0;
-    width: 100%;
-    box-sizing: border-box;
-    position: relative;
+    padding: 2px 0;
 }
 
-.timeline-item-kanan::before {
-    content: '';
+/* BULLET */
+.timeline-item-kanan .bullet {
     width: 8px;
     height: 8px;
+    background: #198754;
     border-radius: 50%;
-    /* background: #3f6fd8; */
-    /* default */
+    margin-top: 6px;
+}
+
+/* CONTENT */
+.progress-content {
+    width: 100%;
+}
+
+/* BARIS UMUM */
+.progress-row {
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+/* MINGGU */
+.progress-row.minggu {
+    font-weight: 600;
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 4px;
+}
+
+/* MULAI + SELESAI SEJAJAR */
+.progress-row.tanggal-inline {
+    display: flex;
+    justify-content: space-between;
+    /* 🔥 kiri & kanan */
+    align-items: center;
+    width: 100%;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+
+/* DESKRIPSI */
+.progress-row.deskripsi {
+    font-size: 13px;
     margin-top: 2px;
 }
 
-
-/* TANGGAL */
-.timeline-item-kanan .timeline-date-kanan {
-    font-size: 12px;
-    color: #6c757d;
-    white-space: nowrap;
-    /* tanggal tidak turun */
-    flex-shrink: 0;
-    /* jangan mengecil */
-    text-align: left;
+.progress-info-green {
+    background: rgba(40, 167, 69, 0.12);
+    border-left: 5px solid #28a745;
+    backdrop-filter: blur(4px);
+    border-radius: 12px;
+    padding: 1.5rem;
 }
 
-/* DESKRIPSI */
-.timeline-item-kanan .desc-kanan {
-    font-weight: 500;
-    font-size: 13px;
-    text-align: left;
-    /* PENTING */
-    line-height: 1.4;
-    flex: 1;
-    /* ambil sisa ruang */
-    word-break: break-word;
-    /* aman kalau panjang */
+.timeline-item-kanan.progress-new .bullet {
+    background: #198754;
 }
+
+.timeline-item-kanan.progress-old .bullet {
+    background: #dc3545;
+}
+
+/* akhir data progres */
 
 .input-wrapper {
     position: relative;
@@ -491,7 +562,222 @@ textarea:focus+label {
     opacity: 0.8;
     text-decoration: underline;
 }
+
+.modal-body img {
+    cursor: zoom-in;
+}
+
+.modal-body img {
+    height: 220px;
+    object-fit: cover;
+}
+
+/* =========================
+   RESPONSIVE SCALE TIMELINE
+========================= */
+
+.timeline-wrapper {
+    width: 98%;
+    max-width: 1200px;
+    font-size: clamp(12px, 1vw, 14px);
+    margin: 0 auto;
+    transform-origin: top center;
+}
+
+@media (max-width: 1400px) {
+    .timeline-wrapper {
+        transform: scale(calc(100vw / 1400));
+    }
+}
+
+body {
+    overflow-x: hidden;
+}
+
+@media (max-width: 1200px) {
+    .timeline-wrapper {
+        transform: scale(0.8);
+        transform-origin: top center;
+    }
+}
+
+@media (max-width: 992px) {
+    .timeline-wrapper {
+        transform: scale(0.7);
+        transform-origin: top center;
+    }
+}
+
+/* =========================
+   MOBILE STABLE VERSION
+========================= */
+
+@media (max-width: 768px) {
+
+    .timeline-item-kanan,
+    .timeline-item-kiri {
+        gap: 6px;
+    }
+
+}
+
+@media (max-width: 768px) {
+
+    .timeline-wrapper {
+        width: 100%;
+        /* max-width: 1700px; */
+        max-width: 100vw;
+        margin-left: calc(-50vw + 50%);
+        padding-left: 0;
+        padding-right: 0;
+
+    }
+
+    .timeline-center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+
+    }
+
+    .step-box {
+        width: 100%;
+        padding-right: 30px !important;
+        padding-top: 0px !important;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .step-box-kanan {
+        width: 100%;
+        flex-direction: column;
+        align-items: center;
+        padding-left: 30px !important;
+        padding-top: 0px !important;
+    }
+
+    .timeline-row {
+        display: grid;
+        grid-template-columns: 1fr 40px 1fr;
+        align-items: stretch;
+    }
+
+    .timeline-left,
+    .timeline-right {
+        min-width: 0;
+    }
+
+    .circle {
+        width: 80px;
+        font-size: 12px;
+        padding: 2px 0;
+    }
+
+    .date {
+        font-size: 9px;
+        text-align: center;
+    }
+
+    .step-title,
+    .step-title-kanan {
+        font-size: 11px;
+        padding: 0px 0px;
+    }
+
+    .progress-row,
+    .progress-row-kiri {
+        font-size: 9px;
+    }
+
+    .progress-row.minggu,
+    .minggu {
+        font-size: 10px;
+        line-height: 1.3;
+    }
+
+    .progress-content-kiri {
+        width: 100%;
+    }
+
+    .progress-content {
+        width: 246%;
+    }
+
+    .bullet,
+    .bullet-kiri {
+        width: 6px;
+        height: 6px;
+    }
+
+    .timeline-item-kiri {
+        display: flex;
+        justify-content: flex-start !important;
+        /* bukan flex-end */
+
+    }
+
+    .timeline-item-kanan {
+        padding-right: 0;
+        gap: 2px;
+    }
+
+    .timeline-left {
+        padding-left: 0;
+        position: relative;
+        min-width: 0;
+    }
+
+    .timeline-right {
+        padding-right: 0;
+        position: relative;
+        min-width: 0;
+    }
+
+    .line {
+        width: 2px;
+        height: 140px;
+        background: #3f6fd8;
+        flex-grow: 1;
+        margin-top: 0px;
+    }
+
+    .circle {
+        margin-bottom: 8px;
+    }
+
+    .right-step .timeline-right::before {
+        content: "";
+        position: absolute;
+        top: 11px;
+        left: 1%;
+        width: 15%;
+        border-top: 2px dashed #3f6fd8;
+    }
+
+    .left-step .timeline-left::after {
+        content: "";
+        position: absolute;
+        top: 10px;
+        right: 1%;
+        width: 15%;
+        border-top: 2px dashed #3f6fd8;
+    }
+
+    /* LIST PROGRESS STEP KIRI */
+    .left-step .timeline-left ul {
+        padding-left: 0px !important;
+        padding-right: 0px !important;
+    }
+
+    /* LIST PROGRESS STEP KANAN (tetap normal) */
+    .right-step .timeline-right ul {
+        padding-left: 0px;
+        padding-right: 0;
+    }
+}
 </style>
+
 <?php
 $lastActiveTahap = 0;
 foreach ($timeline as $row) {
@@ -502,22 +788,23 @@ foreach ($timeline as $row) {
 ?>
 
 <?php if (!empty($timeline)): ?>
-<?php foreach ($timeline as $i => $t): ?>
-<?php $isLeft = $i % 2 != 0; ?>
+<div class="timeline-wrapper">
+    <?php foreach ($timeline as $i => $t): ?>
+    <?php $isLeft = $i % 2 !== 0; ?>
 
-<div class="timeline-row <?= $isLeft ? 'left-step' : 'right-step'; ?>">
+    <div class="timeline-row <?= $isLeft ? 'left-step' : 'right-step'; ?>">
 
-    <!-- KIRI -->
-    <div class="timeline-left">
-        <?php if ($isLeft): ?>
-        <div class="step-box">
-            <div class="step-title"><?= $t['nama_tahap']; ?></div>
+        <!-- KIRI -->
+        <div class="timeline-left">
+            <?php if ($isLeft): ?>
+            <div class="step-box">
+                <div class="step-title"><?= $t['nama_tahap']; ?></div>
 
-            <?php if (!empty($t['progress'])): ?>
-            <ul class="timeline-list">
-                <?php foreach ($t['progress'] as $p): ?>
-                <!-- KODE MERUBAH WARNA PROGRES YANG SUDAH SELESAI MAUPUN BELUM -->
-                <?php
+                <?php if (!empty($t['progress'])): ?>
+                <ul class="timeline-list">
+                    <?php foreach ($t['progress'] as $p): ?>
+                    <!-- KODE MERUBAH WARNA PROGRES YANG SUDAH SELESAI MAUPUN BELUM -->
+                    <?php
                     $isFinishedTahap = $t['urutan'] < $lastActiveTahap;
 
                     if ($isFinishedTahap) {
@@ -529,57 +816,75 @@ foreach ($timeline as $row) {
                     }
                 ?>
 
-                <!-- KODE PREVIEW GAMBAR -->
-                <?php
+                    <!-- KODE PREVIEW GAMBAR -->
+                    <?php
                     $hasFoto = !empty($p['foto']);
                     $fotoUtama = $hasFoto
                         ? base_url('upload/foto_progres/' . $p['foto'][0]['file_foto'])
                         : '';
                 ?>
 
+                    <li class="timeline-item-kiri progress-click <?= $progressClass; ?>" data-images='<?= json_encode(array_map(function($f){
+                    return base_url("upload/foto_progres/".$f["file_foto"]);
+                    }, $p["foto"] ?? []), JSON_HEX_APOS | JSON_HEX_QUOT); ?>'
+                        data-minggu="Minggu Ke : <?= $p['minggu_ke']; ?>"
+                        data-mulai="<?= date('d/m/Y', strtotime($p['start_date'])); ?>"
+                        data-selesai="<?= date('d/m/Y', strtotime($p['end_date'])); ?>"
+                        data-deskripsi="<?= htmlspecialchars($p['deskripsi'], ENT_QUOTES); ?>">
 
-                <li class="timeline-item progress-click <?= $progressClass; ?>" data-images='<?= json_encode(array_map(function($f){
-                        return base_url("upload/foto_progres/".$f["file_foto"]);
-                    }, $p["foto"] ?? [])); ?>'>
-                    <span class="timeline-date">
-                        <?= date('d M Y', strtotime($p['created_at'])); ?>
-                    </span>
-                    <span class="desc"><?= $p['deskripsi']; ?></span>
-                </li>
-                <?php endforeach; ?>
-            </ul>
-            <?php else: ?>
-            <div class="no-progress">Belum ada progres</div>
+
+                        <div class="progress-content-kiri">
+                            <div class="progress-row-kiri minggu">
+                                Minggu Ke : <?= $p['minggu_ke']; ?>
+                            </div>
+
+                            <div class="progress-row-kiri tanggal-inline-kiri">
+                                <span>Mulai : <?= date('d/m/Y', strtotime($p['start_date'])); ?></span>
+                                <span>Selesai : <?= date('d/m/Y', strtotime($p['end_date'])); ?></span>
+                            </div>
+
+                            <div class="progress-row-kiri deskripsi-kiri">
+                                <?= $p['deskripsi']; ?>
+                            </div>
+                        </div>
+
+                        <div class="bullet-kiri"></div>
+
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+                <?php else: ?>
+                <div class="no-progress">Belum ada progres</div>
+                <?php endif; ?>
+            </div>
             <?php endif; ?>
         </div>
-        <?php endif; ?>
-    </div>
 
-    <!-- TENGAH -->
-    <div class="timeline-center">
-        <div class="circle tahap-click" data-id-tahap="<?= $t['id_tahap']; ?>" data-id-unit="<?= $id_unit; ?>">
-            Tahap <?= $t['urutan']; ?>
+        <!-- TENGAH -->
+        <div class="timeline-center">
+            <div class="circle tahap-click" data-id-tahap="<?= $t['id_tahap']; ?>" data-id-unit="<?= $id_unit; ?>">
+                Tahap <?= $t['urutan']; ?>
+            </div>
+
+            <?php if (!empty($t['created_at'])): ?>
+            <span class="date"><?= date('d F Y', strtotime($t['created_at'])); ?></span>
+            <?php endif; ?>
+
+            <?php if ($i < count($timeline) - 1): ?>
+            <div class="line"></div>
+            <?php endif; ?>
         </div>
 
-        <?php if (!empty($t['created_at'])): ?>
-        <span class="date"><?= date('d F Y', strtotime($t['created_at'])); ?></span>
-        <?php endif; ?>
+        <!-- KANAN -->
+        <div class="timeline-right">
+            <?php if (!$isLeft): ?>
+            <div class="step-box-kanan">
+                <div class="step-title-kanan"><?= $t['nama_tahap']; ?></div>
 
-        <?php if ($i < count($timeline) - 1): ?>
-        <div class="line"></div>
-        <?php endif; ?>
-    </div>
-
-    <!-- KANAN -->
-    <div class="timeline-right">
-        <?php if (!$isLeft): ?>
-        <div class="step-box-kanan">
-            <div class="step-title-kanan"><?= $t['nama_tahap']; ?></div>
-
-            <?php if (!empty($t['progress'])): ?>
-            <ul class="timeline-list">
-                <?php foreach ($t['progress'] as $p): ?>
-                <?php
+                <?php if (!empty($t['progress'])): ?>
+                <ul class="timeline-list">
+                    <?php foreach ($t['progress'] as $p): ?>
+                    <?php
                     $isFinishedTahap = $t['urutan'] < $lastActiveTahap;
 
                     if ($isFinishedTahap) {
@@ -591,35 +896,54 @@ foreach ($timeline as $row) {
                     }
                 ?>
 
-                <!-- KODE PREVIEW GAMBAR -->
-                <?php
+                    <!-- KODE PREVIEW GAMBAR -->
+                    <?php
                     $hasFoto = !empty($p['foto']);
                     $fotoUtama = $hasFoto
                         ? base_url('upload/foto_progres/' . $p['foto'][0]['file_foto'])
                         : '';
                 ?>
 
-                <li class="timeline-item-kanan progress-click <?= $progressClass; ?>" data-images='<?= json_encode(array_map(function($f){
-                        return base_url("upload/foto_progres/".$f["file_foto"]);
-                    }, $p["foto"] ?? [])); ?>'>
+                    <li class="timeline-item-kanan progress-click <?= $progressClass; ?>" data-images='<?= json_encode(array_map(function($f){
+                    return base_url("upload/foto_progres/".$f["file_foto"]);
+                    }, $p["foto"] ?? []), JSON_HEX_APOS | JSON_HEX_QUOT); ?>'
+                        data-minggu="Minggu Ke : <?= $p['minggu_ke']; ?>"
+                        data-mulai="<?= date('d/m/Y', strtotime($p['start_date'])); ?>"
+                        data-selesai="<?= date('d/m/Y', strtotime($p['end_date'])); ?>"
+                        data-deskripsi="<?= htmlspecialchars($p['deskripsi'], ENT_QUOTES); ?>">
 
-                    <span class="timeline-date-kanan">
-                        <?= date('d M Y', strtotime($p['created_at'])); ?>
-                    </span>
-                    <span class="desc-kanan"><?= $p['deskripsi']; ?></span>
-                </li>
-                <?php endforeach; ?>
-            </ul>
-            <?php else: ?>
-            <div class="no-progress">Belum ada progres</div>
+                        <div class="bullet"></div>
+
+                        <div class="progress-content">
+                            <div class="progress-row minggu">
+                                Minggu Ke : <?= $p['minggu_ke']; ?>
+                            </div>
+
+                            <div class="progress-row tanggal-inline">
+                                <span>Mulai : <?= date('d/m/Y', strtotime($p['start_date'])); ?></span>
+                                <span>Selesai : <?= date('d/m/Y', strtotime($p['end_date'])); ?></span>
+                            </div>
+
+                            <div class="progress-row deskripsi">
+                                <?= $p['deskripsi']; ?>
+                            </div>
+                        </div>
+
+                    </li>
+
+                    <?php endforeach; ?>
+                </ul>
+                <?php else: ?>
+                <div class="no-progress">Belum ada progres</div>
+                <?php endif; ?>
+            </div>
             <?php endif; ?>
         </div>
-        <?php endif; ?>
+
     </div>
 
+    <?php endforeach; ?>
 </div>
-
-<?php endforeach; ?>
 <?php else: ?>
 <div class="text-center text-muted mt-3">
     Belum ada progres
