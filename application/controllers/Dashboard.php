@@ -355,7 +355,7 @@ class Dashboard extends AUTH_Controller
                 $output .= '<td class="text-center"><span class="badge ' . $colorClass . ' text-xxs font-weight-bold">' . $deadline['days'] . ' Hari</span></td>';
                 $whatsappNumber = preg_replace('/[^0-9]/', '', $row->no_wa);
                 $formatNumber = '62' . $row->no_wa;
-                $output .= '<td class="text-center"><a class="chat-wa" href="https://api.whatsapp.com/send?phone=' . $formatNumber . '"><i class="fa fa-whatsapp"></i></a></td>';
+                $output .= '<td class="text-center"><a class="chat-wa" href="https://api.whatsapp.com/send?phone=' . $formatNumber . '"><i class="fa-brands fa-whatsapp"></i></a></td>';
                 $output .= '</tr>';
 
                 $count++;

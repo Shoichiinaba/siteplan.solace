@@ -169,7 +169,7 @@ class Customer extends AUTH_Controller
                     ', Pada Tanggal ' . $cus->tanggal .
                     ', Apakah ada rencana lagi untuk Survey?';
             $wa = 'https://api.whatsapp.com/send?phone=62' . $cus->no_tlp . '&text=' . rawurlencode($text);
-            $whatsappBtn = '<a href="' . $wa . '" class="btn bg-gradient-success btn-xs rounded-4" target="_blank"><i class="fa fa-whatsapp"></i></a>';
+            $whatsappBtn = '<a href="' . $wa . '" class="btn bg-gradient-success btn-xs rounded-4" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>';
 
             $editBtn = '&nbsp;<button type="button" class="btn bg-gradient-info btn-xs rounded-4 btn-edit"
                 data-bs-toggle="modal" data-bs-target="#edit-data"
@@ -232,7 +232,7 @@ class Customer extends AUTH_Controller
                 ',%20apakah%20ada%20rencana%20lagi%20untuk%20survey%3F%0A';
 
             $whatsappButton = '<a href="' . $whatsappUrl . '" class="btn bg-gradient-success btn-xs rounded-4" data-bs-toggle="tooltip" title="Chat via WhatsApp" target="_blank">
-                                    <i class="fa fa-whatsapp"></i>
+                                    <i class="fa-brands fa-whatsapp"></i>
                             </a>';
 
             // tombol edit hanya muncul jika kategori BUKAN UTJ

@@ -136,13 +136,13 @@
         <nav aria-label="Page navigation">
             <ul class="pagination pagination-sm">
                 <li class="page-item prev">
-                    <a class="page-link" href="javascript:void(0);"><i class="tf-icon bx bx-chevrons-left"></i></a>
+                    <a class="page-link" href="javascript:void(0);"><i class="fa-solid fa-angle-left"></i></a>
                 </li>
                 <li class="page-item active">
                     <a class="page-link" href="javascript:void(0);">1</a>
                 </li>
                 <li class="page-item next">
-                    <a class="page-link" href="javascript:void(0);"><i class="tf-icon bx bx-chevrons-right"></i></a>
+                    <a class="page-link" href="javascript:void(0);"><i class="fa-solid fa-angle-right"></i></a>
                 </li>
             </ul>
         </nav>
@@ -236,7 +236,7 @@ $(document).ready(function() {
 
     function update_pagination() {
         var paginationHtml =
-            '<li class="page-item prev"><a class="page-link" href="javascript:void(0);"><i class="tf-icon bx bx-chevrons-left"></i></a></li>';
+            '<li class="page-item prev"><a class="page-link" href="javascript:void(0);"><i class="fa-solid fa-angle-left"></i></a></li>';
 
         for (var i = 1; i <= total_pages; i++) {
             paginationHtml += '<li class="page-item ' + (i === (start / limit) + 1 ? 'active' : '') +
@@ -244,7 +244,7 @@ $(document).ready(function() {
         }
 
         paginationHtml +=
-            '<li class="page-item next"><a class="page-link" href="javascript:void(0);"><i class="tf-icon bx bx-chevrons-right"></i></a></li>';
+            '<li class="page-item next"><a class="page-link" href="javascript:void(0);"><i class="fa-solid fa-angle-right"></i></a></li>';
 
         $('.pagination').html(paginationHtml);
     }
@@ -330,7 +330,7 @@ function update_pagination() {
     var paginationHtml =
         '<li class="page-item prev"><a class="page-link" href="javascript:void(0);" onclick="changePage(' + Math
         .max(
-            start - limit, 0) + ');"><i class="tf-icon bx bx-chevrons-left"></i></a></li>';
+            start - limit, 0) + ');"><i class="fa-solid fa-angle-left"></i></a></li>';
 
     for (var i = 1; i <= total_pages; i++) {
         paginationHtml += '<li class="page-item ' + (i === (start / limit) + 1 ? 'active' : '') +
@@ -342,7 +342,7 @@ function update_pagination() {
     paginationHtml +=
         '<li class="page-item next"><a class="page-link" href="javascript:void(0);" onclick="changePage(' + Math
         .min(
-            start + limit, (total_pages - 1) * limit) + ');"><i class="tf-icon bx bx-chevrons-right"></i></a></li>';
+            start + limit, (total_pages - 1) * limit) + ');"><i class="fa-solid fa-angle-right"></i></a></li>';
 
     $('.pagination').html(paginationHtml);
 }
