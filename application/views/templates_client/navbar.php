@@ -122,12 +122,20 @@
     background-color: #04695b !important;
     color: #ffffff !important;
 }
+
+.navbar-dark .navbar-toggler-icon {
+    filter: brightness(0) invert(1);
+    transform: scale(1.3);
+    /* memperbesar icon */
+}
 </style>
 <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
 
 <body class="">
     <div class="container position-sticky z-index-sticky top-0">
-        <nav class="navbar navbar-expand-lg shadow position-absolute py-2 start-0 end-0 mx-2 p-nav navbar-custom">
+        <!-- <nav class="navbar navbar-expand-lg shadow position-absolute py-2 start-0 end-0 mx-2 p-nav navbar-custom"> -->
+        <nav
+            class="navbar navbar-expand-lg navbar-dark shadow position-absolute py-2 start-0 end-0 mx-2 p-nav navbar-custom">
             <div class="container-fluid pe-0">
                 <a class="navbar-brand font-weight-bolder ms-lg-0 p-0 m-0" href="">
                     <?php
