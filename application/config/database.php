@@ -11,12 +11,12 @@ $db['default'] = array(
 	'dsn'	=> '',
 	'hostname' => 'localhost',
 	// Offline development
-	// 'username' => 'root',
-	// 'password' => '',
+	'username' => 'root',
+	'password' => '',
 
 	// Online Production
-	'username' => 'u280959498_siteplan',
-	'password' => 'Solacesiteplan33!',
+	// 'username' => 'u280959498_siteplan',
+	// 'password' => 'Solacesiteplan33!',
 
 	'database' => 'u280959498_siteplan',
 	'dbdriver' => 'mysqli',

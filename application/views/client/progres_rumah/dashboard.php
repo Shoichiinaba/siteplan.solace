@@ -825,6 +825,15 @@
 
 }
 
+/* Default: Desktop */
+.tahap7-desktop {
+    display: block;
+}
+
+.tahap7-mobile {
+    display: none;
+}
+
 /* panah ke bawah */
 .arrow-up {
     width: 2px;
@@ -966,7 +975,8 @@
         display: flex;
         flex-direction: column;
         gap: 23px;
-        margin-top: 20px;
+        margin-top: 0px;
+        padding-top: 23px;
     }
 
     .tahap-item {
@@ -1014,15 +1024,14 @@
         left: auto !important;
         right: auto !important;
         z-index: auto !important;
-        margin-top: -168px;
         display: flex;
         flex-direction: column;
         align-items: center;
     }
 
     .tahap7-circle {
-        width: 110px;
-        height: 110px;
+        width: 130px;
+        height: 130px;
         border-radius: 50%;
         background: #2f3e4e;
         color: #fff;
@@ -1105,6 +1114,20 @@
         border-left: 6px solid transparent;
         border-right: 6px solid transparent;
         border-top: 8px solid #2a9d8f;
+    }
+
+    /* Saat Mobile */
+    .tahap7-desktop {
+        display: none !important;
+    }
+
+    .tahap7-mobile {
+        display: flex !important;
+        width: 100%;
+        justify-content: center;
+        align-items: center;
+        margin-top: 2px;
+        position: relative;
     }
 }
 </style>
@@ -1505,8 +1528,10 @@
                             <div class="tahap-horizontal-wrapper tahap-with-serah">
 
                                 <!-- TAHAP 7 (SERAH TERIMA) -->
+
+                                <!-- TAHAP 7 DESKTOP -->
                                 <?php if($tahap7): ?>
-                                <div class="tahap7-floating">
+                                <div class="tahap7-floating tahap7-desktop">
 
                                     <div class="tahap7-circle">
                                         <i class="fas fa-key"></i>
@@ -1524,7 +1549,6 @@
                                         </div>
                                     </div>
 
-                                    <!-- panah ke bawah -->
                                     <div class="arrow-up"></div>
                                 </div>
                                 <?php endif; ?>
@@ -1576,6 +1600,32 @@
                                 </div>
 
                                 <?php endforeach; ?>
+
+                                <!-- TAHAP 7 (SERAH TERIMA) -->
+
+                                <!-- TAHAP 7 MOBILE -->
+                                <?php if($tahap7): ?>
+                                <div class="tahap7-floating tahap7-mobile">
+
+                                    <div class="arrow-down"></div>
+
+                                    <div class="tahap7-circle">
+                                        <i class="fas fa-key"></i>
+
+                                        <div class="tahap7-text">
+                                            <strong>TAHAP 7</strong>
+                                            <span>Serah Terima Kunci</span>
+                                            <?php if($tanggal_serah): ?>
+                                            <small><?= $tanggal_serah ?></small>
+                                            <?php else: ?>
+                                            <div class="progress-note text-gray">
+                                                Belum dijadwalkan
+                                            </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
                             </div>
 
                         </div>
