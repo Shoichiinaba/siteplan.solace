@@ -1518,7 +1518,11 @@
                             }
 
                             // tanggal serah terima (created_ad)
-                                $progress7 = $progress_by_tahap[$tahap7->id_tahap] ?? null;
+                                $progress7 = null;
+
+                                if ($tahap7 && isset($progress_by_tahap[$tahap7->id_tahap])) {
+                                    $progress7 = $progress_by_tahap[$tahap7->id_tahap];
+                                }
 
                                 $tanggal_serah = ($progress7 && $progress7->created_at)
                                     ? date('d M Y', strtotime($progress7->created_at))
