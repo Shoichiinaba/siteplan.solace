@@ -271,7 +271,7 @@ function getChartDataset($id_perum = null, $database)
                                 <p class="text-sm mb-0 text-capitalize font-weight-bold">UTJ</p>
                                 <h5 class="font-weight-bolder mb-0">
                                     <?= $jum_dipesan;  ?>
-                                    <span class="text-warning text-sm font-weight-bolder">Unit</span>
+                                    <span class="text-danger text-sm font-weight-bolder">Unit</span>
                                 </h5>
                             </div>
                         </div>
@@ -304,7 +304,7 @@ function getChartDataset($id_perum = null, $database)
                                 <p class="text-sm mb-0 text-capitalize font-weight-bold">Sold Out</p>
                                 <h5 class="font-weight-bolder mb-0">
                                     <?= $jum_sold;  ?>
-                                    <span class=" text-danger text-sm font-weight-bolder">Unit</span>
+                                    <span class=" text-warning text-sm font-weight-bolder">Unit</span>
                                 </h5>
                             </div>
                         </div>

@@ -120,6 +120,55 @@ sup {
 [readonly] {
     background: #a9a9a936;
 }
+
+.table-responsive-custom {
+    overflow-x: auto;
+    position: relative;
+}
+
+#list-selatan {
+    min-width: 1200px;
+    /* supaya bisa scroll */
+}
+
+#list-selatan th:first-child,
+#list-selatan td:first-child {
+    position: sticky;
+    left: 0;
+    background: #fff;
+    z-index: 2;
+}
+
+#list-selatan th:first-child {
+    z-index: 3;
+    /* lebih tinggi dari td */
+}
+
+.table-scroll {
+    overflow-x: auto;
+    position: relative;
+}
+
+#list-selatan {
+    min-width: 1400px;
+    /* supaya muncul scroll */
+}
+
+.dataTables_scrollBody {
+    overflow-x: auto !important;
+}
+
+div.dataTables_wrapper {
+    width: 100%;
+}
+
+div.dataTables_scrollBody {
+    overflow-x: auto !important;
+}
+
+div.dataTables_scrollHead {
+    overflow: hidden !important;
+}
 </style>
 <div class="container">
     <div id="svg-container">
@@ -175,9 +224,10 @@ sup {
 <div class="panel-table">
     <div class="container-fluid py-4">
         <div class="card-body px-0 pt-0 pb-2">
-            <div class="table-responsive p-0">
+            <!-- <div class="table-responsive p-0"> -->
+            <div class="filter-area">
                 <div class="row mb-2">
-                    <div class="col-lg-3 col-xxl-2  col-md-3">
+                    <div class="col-lg-2 col-xxl-2  col-md-3">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text text-body">
                                 <i class="ni ni-building" aria-hidden="true"></i>
@@ -196,7 +246,7 @@ sup {
                             </select>
                         </div>
                     </div>
-                    <div class="col-lg-3 col-xxl-2  col-md-3">
+                    <div class="col-lg-2 col-xxl-2  col-md-3">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text text-body">
                                 <i class="ni ni-money-coins" aria-hidden="true"></i>
@@ -243,6 +293,8 @@ sup {
                         </a>
                     </div>
                 </div>
+            </div>
+            <div class="table-scroll">
                 <table id="list-selatan" class="table align-items-center mb-0">
                     <thead>
                         <tr>
@@ -265,6 +317,7 @@ sup {
                     </tfoot>
                 </table>
             </div>
+            <!-- </div> -->
         </div>
     </div>
 </div>
@@ -321,7 +374,7 @@ sup {
                             <div class="form-group mb-1">
                                 <div class="input-group">
                                     <a class="chat-wa" target="_blank">
-                                        <span class="input-group-text"><i class="fa fa-whatsapp"></i></span>
+                                        <span class="input-group-text"><i class="fa-brands fa-whatsapp"></i></span>
                                     </a>
                                     <input class="form-control form-control-sm" placeholder="" type="number" id="no-wa"
                                         name="no-wa">
@@ -1092,11 +1145,14 @@ function load_data_kapling() {
 
         $('#list-selatan').DataTable().destroy();
     }
+
     window.crud = $('#list-selatan').DataTable({
         "paging": true,
         "ordering": true,
         "autoWidth": false,
         "responsive": true,
+        scrollX: true,
+        autoWidth: false,
         processing: true,
         serverSide: true,
         ajax: "<?php echo base_url('/Home/search'); ?>/" + $('#id-siteplan').val(),
@@ -1286,7 +1342,7 @@ $(function() {
         showDropdowns: true,
         minYear: 1901,
         locale: {
-            format: 'DD/MM/YYYY'
+            format: 'DD-MM-YYYY'
         }
 
     });

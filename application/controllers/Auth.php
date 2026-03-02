@@ -60,56 +60,52 @@ class Auth extends CI_Controller
 		$this->session->set_flashdata('sukses', 'Anda Telah Keluar dari Aplikasi');
 		redirect('Auth');
 	}
-	// function __construct()
-	// {
-	// 	parent::__construct();
-	// 	$this->load->model('m_auth');
-	// 	$is_login = $this->session->userdata('status');
 
-	// 	if ($is_login) {
-	// 		redirect(base_url());
-	// 		return;
-	// 	}
-	// }
+	function logout_cus()
+	{
+		$this->session->sess_destroy();
+		$this->session->set_flashdata('sukses', 'Anda Telah Keluar dari Aplikasi');
+		redirect('Auth/customer');
+	}
 
-	// function index()
-	// {
-	// 	$this->load->view('page/login');
-	// }
+	public function customer()
 
-	// public function login()
-	// {
-	// 	$input = array(
-	// 		'username'  => $this->input->post('username'),
-	// 		'password'  => $this->input->post('password'),
-	// 	);
+		{
+			$session = $this->session->userdata('status');
 
-	// 	// $input = (object) $this->input->post(null, true);
+			if ($session == '') {
+				$this->load->view('client/login/login');
+			} else {
+				redirect('client/Dashboard_progres');
+			}
+		}
 
-	// 	if ($this->m_auth->run($input)) {
-	// 		// $this->session->set_flashdata('success', 'Berhasil melakukan login');
-	// 		// if ($this->session->userdata("status_user") == '0') {
+	public function login_customer()
+	{
+		$user = $this->input->post('username', TRUE);
+		$pass = $this->input->post('password', TRUE);
 
-	// 		redirect(base_url(''));
-	// 		// } else {
+		$user = $this->M_auth->login_cus($user, $pass);
 
-	// 		// redirect(base_url('login'));
-	// 		// }
-	// 	} else {
-	// 		// echo $input;
-	// 		$this->session->set_flashdata('error', 'E-mail/Password anda masukan salah !!');
-	// 		redirect(base_url('Auth'));
-	// 	}
-	// }
-	// function logout()
-	// {
-	// 	$this->session->sess_destroy();
-	// 	$this->session->set_flashdata('sukses', 'Anda Telah Keluar dari Aplikasi');
-	// 	redirect(base_url('Auth'));
-	// 	// redirect('Auth');
-	// }
+		if ($user) {
+
+			$this->session->set_userdata([
+				'id_customer' => $user->id,
+				'username'    => $user->username,
+				'logged_in'   => TRUE
+			]);
+
+			redirect('Client/Dashboard_progres');
+
+		} else {
+			$this->session->set_flashdata('result_login', '<br>Email dan Password salah.');
+			redirect('Auth/customer');
+		}
+	}
+
+
 }
 
-	
+
 /* End of file Login.php */
 /* Location: ./application/controllers/Login.php */

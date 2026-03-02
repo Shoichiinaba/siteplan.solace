@@ -5,7 +5,6 @@
 <script src="<?= base_url('assets_adm/'); ?>js/plugins/smooth-scrollbar.min.js"></script>
 <script src="<?= base_url('assets_adm/'); ?>vendor/select2/select2.min.js"></script>
 
-
 <script>
 var win = navigator.platform.indexOf('Win') > -1;
 if (win && document.querySelector('#sidenav-scrollbar')) {

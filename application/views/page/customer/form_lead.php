@@ -576,11 +576,12 @@ $(document).ready(function() {
     var picker;
     var table = $('#list-lead').DataTable({
         "paging": true,
-        "autoWidth": true,
+        "autoWidth": false,
         "search": true,
         "responsive": true,
         "processing": true,
         "serverSide": true,
+        scrollX: true,
         "ajax": {
             "url": "<?=site_url('Customer/get_customer_lead')?>",
             "type": "POST",

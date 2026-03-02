@@ -91,5 +91,85 @@ class FormDataModel extends CI_Model
         return $this->db->get()->result(); // ambil semua transaksi
     }
 
+    public function get_properti_customer($id_visit)
+    {
+        return $this->db
+            ->select('visit.id_blok,
+                    unit_progres.id_unit,
+                    unit_progres.type,
+                    unit_progres.ukuran,
+                    denahs.id_perum,
+                    denahs.id_denahs,
+                    denahs.code,
+                    perumahan.nama AS nama_perumahan')
+
+            ->from('visit')
+            ->join('unit_progres', 'unit_progres.id_unit = visit.id_blok', 'left')
+            ->join('denahs', 'denahs.id_denahs = unit_progres.id_denahs', 'left')
+            ->join('perumahan', 'perumahan.id_perum = denahs.id_perum', 'left')
+            ->where('visit.id_visit', $id_visit)
+            ->get()
+            ->row();
+    }
+
+    public function get_progress_terakhir($id_unit)
+    {
+        return $this->db
+            ->where('id_unit', $id_unit)
+            ->order_by('minggu_ke', 'DESC')
+            ->limit(1)
+            ->get('tbl_progress_unit')
+            ->row();
+    }
+
+    public function get_marketing_by_visit($id_visit)
+    {
+        return $this->db
+            ->select('admin.id,
+                    admin.nama,
+                    admin.email,
+                    admin.no_tlp,
+                    admin.foto')
+            ->from('visit')
+            ->join('admin', 'admin.id = visit.id_marketing', 'left')
+            ->where('visit.id_visit', $id_visit)
+            ->get()
+            ->row();
+    }
+
+    public function get_tahap_progress($id_unit)
+    {
+        $this->db->order_by('urutan', 'ASC');
+        $tahap = $this->db->get('tbl_tahap')->result();
+
+        $result = [];
+
+        foreach ($tahap as $t) {
+
+            $progress = $this->db
+                ->where('id_unit', $id_unit)
+                ->where('id_tahap', $t->id_tahap)
+                ->order_by('minggu_ke', 'ASC')
+                ->get('tbl_progress_unit')
+                ->result();
+
+            // ❗ Jika tidak ada progress, skip tahap ini
+            if (empty($progress)) {
+                continue;
+            }
+
+            foreach ($progress as $p) {
+                $p->foto = $this->db
+                    ->where('id_progres', $p->id_progress)
+                    ->get('tbl_progress_foto')
+                    ->result();
+            }
+
+            $t->progress = $progress;
+            $result[] = $t;
+        }
+
+        return $result;
+    }
 
 }

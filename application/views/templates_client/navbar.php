@@ -155,27 +155,45 @@
                     </span>
                 </button>
                 <div class="collapse navbar-collapse" id="navigation">
-                    <ul class="navbar-nav mx-auto ms-xl-auto me-xl-7">
+                    <ul class="navbar-nav ms-auto">
+
+                        <?php if ($this->session->userdata('id_customer')): ?>
+
+                        <!-- Jika SUDAH login -->
                         <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center me-2 active" aria-current="page"
-                                href="https://solaceproperti.com/">
+                            <a class="nav-link me-2" href="<?= site_url('Auth/logout_cus'); ?>">
+                                <i class="fa fa-sign-out"></i>
+                                Logout
+                            </a>
+                        </li>
+
+                        <?php else: ?>
+
+                        <!-- Jika BELUM login -->
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center me-2" href="https://solaceproperti.com/">
                                 <i class="fa fa-home opacity-6 me-1"></i>
                                 Solace Home
                             </a>
                         </li>
+
                         <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center me-2 active" href="">
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link me-2" href="<?php echo site_url(''); ?> ">
+                            <a class="nav-link me-2" href="<?= site_url(''); ?>">
                                 <i class="ni ni-square-pin"></i>
                                 Home
                             </a>
                         </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link me-2" href="<?= site_url('Auth/customer'); ?>">
+                                <i class="fa fa-sign-in"></i>
+                                Login Customer
+                            </a>
+                        </li>
+
+                        <?php endif; ?>
+
                     </ul>
-                    <li class=" nav-item d-flex align-items-center">
-                    </li>
                 </div>
             </div>
         </nav>

@@ -207,6 +207,4 @@ class Visit_model extends CI_Model
             ->where('id_visit_account', $id_visit)
             ->update('customer_account', $data);
     }
-
-
 }

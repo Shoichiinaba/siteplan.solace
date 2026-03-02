@@ -23,9 +23,11 @@
 
     <!-- datatable css -->
     <link rel="stylesheet" href="//cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
 
     <!-- datatables js -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 
     <script src="<?php echo base_url('assets/js/datatables.min.js') ?>"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
