@@ -417,7 +417,7 @@ class Customer extends AUTH_Controller
                 'id_visit_account' => $id,
                 'nama'             => $this->input->post('nama'),
                 'telepon'          => $this->input->post('no_tlp'),
-                'foto'             => 'default.png',
+                'foto_profil'             => 'default.png',
                 'role'             => 'customer',
                 'dibuat'           => date('Y-m-d H:i:s'),
             ];

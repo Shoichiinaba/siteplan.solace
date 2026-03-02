@@ -63,7 +63,7 @@ $(document).ready(function() {
                     $('#load_data_message').html(
                         '<div class="alert alert-primary alert-dismissible" role="alert">' +
                         '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
-                        '<i class="fa fa-folder-open"></i> Data Agent Tidak Ditemukan...</div>'
+                        '<i class="fa fa-folder-open"></i> Belum ADA Progres...</div>'
                     );
                     action = 'active';
                 } else {
