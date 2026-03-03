@@ -20,12 +20,135 @@ if ($this->session->flashdata('error')) {
     echo '<div class="alert alert-danger">' . $this->session->flashdata('error') . '</div>';
 }
 ?>
+<style>
+.btn-liquid-ios {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 18px;
+
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #ffffff;
+
+    background: linear-gradient(145deg,
+            rgba(4, 105, 91, 0.85),
+            rgba(4, 105, 91, 0.65));
+
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+
+    border: 1px solid rgba(255, 255, 255, 0.25);
+
+    --main-color: 4, 105, 91;
+    box-shadow:
+        0 15px 40px rgba(var(--main-color), 0.6),
+        inset 0 1px 2px rgba(255, 255, 255, 0.8),
+        inset 0 -3px 8px rgba(0, 0, 0, 0.25);
+
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(.25, .8, .25, 1);
+}
+
+/* TEXT LAYER */
+.btn-liquid-ios span {
+    position: relative;
+    z-index: 2;
+    color: #ffffff;
+    transition: color 0.3s ease;
+}
+
+/* Moving glass reflection */
+.btn-liquid-ios::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 220%;
+    height: 220%;
+    background: radial-gradient(circle at 30% 30%,
+            rgba(255, 255, 255, 0.45),
+            rgba(255, 255, 255, 0.05) 40%,
+            transparent 60%);
+    transform: rotate(25deg);
+    transition: all 0.8s ease;
+}
+
+/* Liquid light sweep */
+.btn-liquid-ios::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -75%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(120deg,
+            rgba(255, 255, 255, 0.6),
+            rgba(255, 255, 255, 0.05));
+    transform: skewX(-20deg);
+    transition: 0.8s;
+}
+
+/* Hover Effect */
+.btn-liquid-ios:hover {
+    transform: translateY(-4px);
+    box-shadow:
+        0 15px 40px rgba(4, 105, 91, 0.6),
+        0 0 15px rgba(232, 174, 93, 0.4),
+        /* glow emas */
+        inset 0 1px 2px rgba(255, 255, 255, 0.8),
+        inset 0 -3px 8px rgba(0, 0, 0, 0.25);
+}
+
+.btn-liquid-ios:hover span {
+    color: #e8ae5d;
+}
+
+.btn-liquid-ios:hover::after {
+    left: 130%;
+}
+
+/* Press Effect (iOS style depth press) */
+.btn-liquid-ios:active {
+    transform: translateY(1px) scale(0.98);
+    box-shadow:
+        0 5px 15px rgba(4, 105, 91, 0.4),
+        inset 0 3px 8px rgba(230, 17, 17, 0.3);
+}
+
+.login-bg {
+    background-image: url("<?= base_url('upload/header.png'); ?>");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Gambar khusus mobile */
+@media (max-width: 767px) {
+    .login-bg {
+        background-image: url("<?= base_url('upload/mobile-customer.png'); ?>");
+        background-size: contain;
+        background-position: top center;
+    }
+
+    .page-header {
+        background-position: center 20% !important;
+        min-height: 672px;
+        padding-top: 150px !important;
+        padding-bottom: 150px !important;
+    }
+
+    .row.mt-n10 {
+        margin-top: -269px !important;
+    }
+}
+</style>
 
 <body class="">
     <main class="main-content  mt-0">
-        <section class="min-vh-100 mb-8">
-            <div class="page-header align-items-start pt-5 pb-11 m-3 border-radius-lg"
-                style="background-image: url('<?= base_url('upload'); ?>/header.png');">
+        <section class="min-vh-80 mb-0">
+            <div class="page-header align-items-start pt-3 pb-11 border-radius-lg login-bg">
                 <div class="container">
                     <div class="row justify-content-center">
                         <div class="col-lg-5 text-center mx-auto">
@@ -91,8 +214,9 @@ if ($this->session->flashdata('error')) {
                                             </div>
                                             <!-- /.col -->
                                             <div class="text-center">
-                                                <button type="submit" class="btn bg-gradient-info w-100 my-4 mb-2">Sign
-                                                    in</button>
+                                                <button type="submit" class="btn btn-liquid-ios w-100 my-4 mb-2">
+                                                    <span>Sign in</span>
+                                                </button>
                                             </div>
                                             <!-- /.col -->
                                         </div>
