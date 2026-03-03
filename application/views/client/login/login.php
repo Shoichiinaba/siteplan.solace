@@ -118,10 +118,14 @@ if ($this->session->flashdata('error')) {
 }
 
 .login-bg {
-    background-image: url("<?= base_url('upload/header.png'); ?>");
+    background-image: url("<?= base_url('upload/header0.png'); ?>");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+}
+
+.row.mt-n10 {
+    margin-top: -423px !important;
 }
 
 /* Gambar khusus mobile */
@@ -233,7 +237,7 @@ if ($this->session->flashdata('error')) {
         <style>
         .page-header {
             position: relative;
-            padding-top: 0% !important;
+            padding-top: 19% !important;
             background-size: cover;
             background-position: center;
         }

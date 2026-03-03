@@ -118,26 +118,41 @@ if ($this->session->flashdata('error')) {
 }
 
 .login-bg {
-    background-image: url("<?= base_url('upload/header.png'); ?>");
+    background-image: url("<?= base_url('upload/header1.png'); ?>");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
 }
 
+.row.mt-n10 {
+    margin-top: -443px !important;
+}
+
 /* Gambar khusus mobile */
 @media (max-width: 767px) {
     .login-bg {
-        background-image: url("<?= base_url('upload/header-mobile.png'); ?>");
+        background-image: url("<?= base_url('upload/head-marketing.png'); ?>");
         background-size: contain;
         background-position: top center;
+    }
+
+    .page-header {
+        background-position: center 20% !important;
+        min-height: 672px;
+        padding-top: 150px !important;
+        padding-bottom: 150px !important;
+    }
+
+    .row.mt-n10 {
+        margin-top: -191px !important;
     }
 }
 </style>
 
 <body class="">
-    <main class="main-content  mt-0">
-        <section class="min-vh-100 mb-8">
-            <div class="page-header align-items-start pt-5 pb-11 m-3 border-radius-lg login-bg">
+    <main class="main-content mt-0">
+        <section class="min-vh-80 mb-0">
+            <div class="page-header align-items-start pt-5 pb-11 border-radius-lg login-bg">
                 <div class="container">
                     <div class="row justify-content-center">
                         <div class="col-lg-5 text-center mx-auto">
@@ -222,7 +237,7 @@ if ($this->session->flashdata('error')) {
         <style>
         .page-header {
             position: relative;
-            padding-top: 0% !important;
+            padding-top: 21% !important;
             background-size: cover;
             background-position: center;
         }
