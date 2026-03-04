@@ -1288,19 +1288,6 @@ function filter_tgl() {
             // alert(start);
             $('#tgl-start').val(start.format('DD/MM/YYYY'));
             $('#tgl-end').val(end.format('DD/MM/YYYY'));
-            // var tgl_start = $('#tgl-start').val();
-            // var tgl_end = $('#tgl-end').val();
-            // var strStart = tgl_start.replace(/\//g, '-');
-            // var strEnd = tgl_end.replace(/\//g, '-');
-
-            // if ($('#status').val() == 'UTJ' || $('#status').val() == 'DP' || $('#status').val() == 'Sold Out') {
-            //     window.crud.ajax.url("<?php echo base_url('/Home/search'); ?>/" + $('#id-siteplan').val() +
-            //         "?fil_type_unit=" + $('#fil-type-unit').val() + "&status=" + $('#status').val() + "&tgl_start=" + $('#tgl-start').val() + "&tgl_end=" + $('#tgl-end').val()).load();
-
-            //     $('#cetak-pdf').attr('href', "<?= base_url('Laporan_pdf'); ?>/data/" + $('#id-siteplan').val() + '/' + $('#status').val() + '/' + strStart + '/' + strEnd)
-            // } else {
-
-            // }
 
             if ($('#fil-type-unit').val() == 'Komersil') {
                 if ($('#fil-payout').val() == 'kpr') {
@@ -1317,6 +1304,7 @@ function filter_tgl() {
                 }
 
             }
+
             window.crud.ajax.url("<?php echo base_url('/Home/search'); ?>/" + $('#id-siteplan').val() +
                 "?fil_type_unit=" + $('#fil-type-unit').val() + "&fil_payout=" + $('#fil-payout')
                 .val() + "&status=" + $('#status').val() + "&tgl_start=" + $('#tgl-start').val() +
@@ -1325,13 +1313,7 @@ function filter_tgl() {
             var tgl_end = $('#tgl-end').val();
             var strStart = tgl_start.replace(/\//g, '-');
             var strEnd = tgl_end.replace(/\//g, '-');
-            // alert(strStart)
-            // if ($('#status').val() == 'UTJ' || $('#status').val() == 'DP' || $('#status').val() == 'Sold Out') {
 
-            //     $('#cetak-pdf').attr('href', "<?= base_url('Laporan_pdf'); ?>/data/" + $('#id-siteplan').val() + '/' + $('#status').val() + '/' + strStart + '/' + strEnd)
-            // } else {
-
-            // }
         });
 
     });

@@ -13,6 +13,7 @@ class Laporan_pdf extends CI_Controller
         parent::__construct();
         $this->load->model('M_pdf');
     }
+
     public function data()
     {
         // panggil library yang kita buat sebelumnya yang bernama pdfgenerator
@@ -50,4 +51,3 @@ class Laporan_pdf extends CI_Controller
         $this->pdfgenerator->generate($html, $file_pdf, $paper, $orientation);
     }
 }
-http://localhost/site_map/Laporan_pdf/data/6/Subsidi/A1-A10-A12/
