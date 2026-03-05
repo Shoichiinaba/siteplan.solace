@@ -117,6 +117,11 @@ if ($this->session->flashdata('error')) {
         inset 0 3px 8px rgba(230, 17, 17, 0.3);
 }
 
+.col-xl-4.col-lg-5.col-md-7.mx-auto {
+    position: relative;
+    z-index: 10;
+}
+
 .login-bg {
     background-image: url("<?= base_url('upload/header0.png'); ?>");
     background-size: cover;
