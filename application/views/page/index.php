@@ -405,7 +405,7 @@ div.dataTables_scrollHead {
                             <div class="form-group mb-1">
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="ni ni-money-coins"></i></span>
-                                    <input class="form-control form-control-sm" placeholder="" type="text"
+                                    <input class="form-control form-control-sm rupiah" placeholder="" type="text"
                                         id="nominal-dp" name="nominal-dp">
                                 </div>
                             </div>
@@ -416,7 +416,7 @@ div.dataTables_scrollHead {
                             <div class="form-group mb-1">
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="ni ni-money-coins"></i></span>
-                                    <input class="form-control form-control-sm" type="number" id="nominal"
+                                    <input class="form-control form-control-sm rupiah" type="text" id="nominal"
                                         name="nominal">
                                 </div>
                             </div>
@@ -771,7 +771,7 @@ function updateDPfield() {
         if (window.totalDPdibayar == 0) {
             // Belum ada DP
             $('#label-nominal-dp').text('Harga Unit / DP');
-            $('#nominal-dp').val('').prop('readonly', false).attr('type', 'number');
+            $('#nominal-dp').val('').prop('readonly', false).attr('type', 'text');
 
             // Tampilkan input Nominal Dibayar, isi default = Nominal DP
             $("#in-nominal-dibayar").removeAttr("hidden").show();
@@ -784,7 +784,7 @@ function updateDPfield() {
 
             // Tampilkan input Nominal Dibayar, isi default = Sisa DP
             $("#in-nominal-dibayar").removeAttr("hidden").show();
-            $("#nominal").val(window.sisaDP).prop("readonly", false).removeAttr("disabled");
+            $("#nominal").val(formatRupiah(window.sisaDP)).prop("readonly", false).removeAttr("disabled");
 
         } else {
             // DP sudah lunas
@@ -823,7 +823,7 @@ $(document).ready(function() {
             if (window.UTJsudahAda) {
                 // Kalau UTJ sudah ada → readonly + disabled
                 $("#nominal")
-                    .val(window.nominalUTJ || '')
+                    .val(formatRupiah(window.nominalUTJ || ''))
                     .prop("readonly", true)
                     .attr("disabled", true);
             } else {
@@ -866,8 +866,9 @@ $('#btn-simpan-trans').click(function() {
     formData.append('no-wa', $('#no-wa').val());
     formData.append('status-trans', $('#status-trans').val());
     formData.append('tgl-trans', $('#tgl-trans').val());
-    formData.append('nominal', $('#nominal').val());
-    formData.append('nominal-dp', $('#nominal-dp').val());
+    formData.append('nominal', $('#nominal').val().replace(/[^0-9]/g, ''));
+    formData.append('nominal-dp', $('#nominal-dp').val().replace(/[^0-9]/g, ''));
+
     $.ajax({
         type: 'POST',
         url: "<?php echo site_url('Home/upload_transaksi') ?>",
@@ -1328,5 +1329,20 @@ $(function() {
         }
 
     });
+});
+
+$(document).on('input', '.rupiah', function() {
+
+    let angka = $(this).val().replace(/[^0-9]/g, '');
+
+    if (angka === '') {
+        $(this).val('');
+        return;
+    }
+
+    let rupiah = new Intl.NumberFormat('id-ID').format(angka);
+
+    $(this).val('Rp.' + rupiah);
+
 });
 </script>

@@ -360,7 +360,8 @@ class Customer extends AUTH_Controller
     {
         $id         = $this->input->post('id'); // id visit
         $id_denahs  = $this->input->post('code');
-        $nominal    = $this->input->post('nominal');
+        $nominal = $this->input->post('nominal');
+        $nominal = preg_replace('/[^0-9]/', '', $nominal);
 
         if (!empty($id)) {
 

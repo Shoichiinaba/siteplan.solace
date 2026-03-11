@@ -463,20 +463,69 @@ class Home extends CI_Controller
                 ];
 
                 $data['type_unit'] = $result->type_unit;
+
                 if ($result->status_pembayaran == "kpr-sub" or $result->status_pembayaran == "kpr-kom") {
                     $data['status_pembayaran'] = 'KPR';
                 } else if ($result->status_pembayaran == "cash") {
                     $data['status_pembayaran'] = 'CASH';
                 } else {
-
                     $data['status_pembayaran'] = $result->status_pembayaran;
                 }
-                if ($result->type == "Dipesan" or $result->type == "Sold Out") {
-                    $data['action'] = '<button onclick="openDataRow(\'' . $result->id_denahs . '\',\'' . $result->type_unit . '\',\'' . $result->code . '\', \'' . $result->type . '\', \'' . $result->description . '\' , \'' . $result->progres_berkas . '\')" class="btn btn-sm bg-gradient-success" data-bs-toggle="modal" data-bs-target="#exampleModaledit"><i class="fa fa-edit" style="font-size:small;"></i> &nbsp;Edit</button>&nbsp;&nbsp;' .
-                        '<button type="button" onclick="getDataDoc(\'' . $result->id_denahs . '\',\'' . $result->type_unit . '\' ,\'' . $result->status_pembayaran . '\', \'' . $result->progres_berkas . '\')" id="btn-document-' . $result->id_denahs . '" class="btn-modal-document btn btn-sm bg-gradient-primary" value="' . $result->status_pembayaran . '" data-bs-toggle="modal" data-bs-target="#exampleModalatt"><i class="fa fa-paperclip" style="font-size:small;"></i> &nbsp;Doc</button>';
-                } else {
-                    $data['action'] = '<button onclick="openDataRow(\'' . $result->id_denahs . '\',\'' . $result->type_unit . '\',\'' . $result->code . '\', \'' . $result->type . '\', \'' . $result->description . '\' , \'' . $result->progres_berkas . '\')" class="btn btn-sm bg-gradient-success" data-bs-toggle="modal" data-bs-target="#exampleModaledit"> <i class="fa fa-edit" style="font-size:small;"></i> &nbsp;Edit</button>';
+
+                $btn_doc = '';
+                $btn_edit = '';
+
+                // =======================
+                // TOMBOL DOC
+                // =======================
+                if ($result->type == "Dipesan" || $result->type == "Sold Out") {
+
+                    $btn_doc = '<button type="button"
+                        onclick="getDataDoc(\'' . $result->id_denahs . '\',
+                        \'' . $result->type_unit . '\',
+                        \'' . $result->status_pembayaran . '\',
+                        \'' . $result->progres_berkas . '\')"
+
+                        id="btn-document-' . $result->id_denahs . '"
+
+                        class="btn-modal-document btn btn-sm bg-gradient-primary"
+
+                        value="' . $result->status_pembayaran . '"
+
+                        data-bs-toggle="modal"
+                        data-bs-target="#exampleModalatt">
+
+                        <i class="fa fa-paperclip" style="font-size:small;"></i> &nbsp;Doc
+                    </button>';
                 }
+
+                // =======================
+                // TOMBOL EDIT
+                // =======================
+                if ((int)$result->progres_berkas >= 10) {
+
+                    $btn_edit = '<button
+                        onclick="openDataRow(\'' . $result->id_denahs . '\',
+                        \'' . $result->type_unit . '\',
+                        \'' . $result->code . '\',
+                        \'' . $result->type . '\',
+                        \'' . $result->description . '\',
+                        \'' . $result->progres_berkas . '\')"
+
+                        class="btn btn-sm bg-gradient-success"
+
+                        data-bs-toggle="modal"
+                        data-bs-target="#exampleModaledit">
+
+                        <i class="fa fa-edit" style="font-size:small;"></i> &nbsp;Edit
+                    </button>';
+                }
+
+                // =======================
+                // GABUNGKAN TOMBOL
+                // =======================
+                $data['action'] = $btn_doc . '&nbsp;&nbsp;' . $btn_edit;
+
                 $data['tgl_update'] = $result->tgl_update;
                 $data['user_admin'] = $result->user_admin;
                 $data_trans = [];
