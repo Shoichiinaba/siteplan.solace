@@ -358,10 +358,11 @@ class Customer extends AUTH_Controller
 
     public function edit_kunjungan()
     {
-        $id         = $this->input->post('id'); // id visit
-        $id_denahs  = $this->input->post('code');
-        $nominal = $this->input->post('nominal');
-        $nominal = preg_replace('/[^0-9]/', '', $nominal);
+        $id_marketing   = $this->session->userdata('userdata')->id;
+        $id             = $this->input->post('id'); // id visit
+        $id_denahs      = $this->input->post('code');
+        $nominal        = $this->input->post('nominal');
+        $nominal        = preg_replace('/[^0-9]/', '', $nominal);
 
         if (!empty($id)) {
 
@@ -395,12 +396,13 @@ class Customer extends AUTH_Controller
             // DATA TRANSAKSI
             // ===============================
             $data_trans = [
-                'id_trans_denahs' => $id_denahs,
-                'nama_cus'        => $this->input->post('nama'),
-                'tgl_trans'       => $this->input->post('tanggal'),
-                'status_trans'    => $this->input->post('kategori'),
-                'no_wa'           => $this->input->post('no_tlp'),
-                'nominal'         => $nominal,
+                'id_trans_denahs'   => $id_denahs,
+                'id_marketing'      => $id_marketing,
+                'nama_cus'          => $this->input->post('nama'),
+                'tgl_trans'         => $this->input->post('tanggal'),
+                'status_trans'      => $this->input->post('kategori'),
+                'no_wa'             => $this->input->post('no_tlp'),
+                'nominal'           => $nominal,
             ];
 
             // ===============================
@@ -418,7 +420,7 @@ class Customer extends AUTH_Controller
                 'id_visit_account' => $id,
                 'nama'             => $this->input->post('nama'),
                 'telepon'          => $this->input->post('no_tlp'),
-                'foto_profil'             => 'default.png',
+                'foto_profil'      => 'default.png',
                 'role'             => 'customer',
                 'dibuat'           => date('Y-m-d H:i:s'),
             ];

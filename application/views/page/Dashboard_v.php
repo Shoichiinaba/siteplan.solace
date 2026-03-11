@@ -1,4 +1,27 @@
 <style>
+.deadline-empty {
+    text-align: center;
+    padding: 30px 10px;
+    color: #6c757d;
+}
+
+.deadline-icon {
+    font-size: 28px;
+    color: #2ecc71;
+    margin-bottom: 8px;
+}
+
+.deadline-text {
+    font-weight: 600;
+    font-size: 13px;
+    color: #344767;
+}
+
+.deadline-sub {
+    font-size: 11px;
+    color: #8a8a8a;
+}
+
 /* pagination stile */
 @-webkit-keyframes placeHolderShimmer {
     0% {
@@ -393,9 +416,6 @@ function getChartDataset($id_perum = null, $database)
                                             </tbody>
                                         </table>
                                         <div id="load_message"></div>
-                                        <!-- <div class="text-center mt-0">
-                                                <a href="#" id="down"><i class="fa fa-hand-o-down down-icon"></i></a>
-                                            </div> -->
                                     </div>
                                 </div>
                             </div>
@@ -612,7 +632,19 @@ $(document).ready(function() {
             cache: false,
             success: function(data) {
                 if (data == '') {
-                    $('#load_message').html('<h6>&nbsp; &nbsp;Tidak ada data lagi..</h6>');
+                    $('#load_message').html(`
+                            <div class="deadline-empty">
+                                <div class="deadline-icon">
+                                    <i class="fa-regular fa-circle-check"></i>
+                                </div>
+                                <div class="deadline-text">
+                                    Tidak ada transaksi yang mendekati deadline
+                                </div>
+                                <div class="deadline-sub">
+                                    Semua proses transaksi masih dalam batas aman
+                                </div>
+                            </div>
+                        `);
                     $('#down').hide();
                     action = 'inactive';
                 } else {

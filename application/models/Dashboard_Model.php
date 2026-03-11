@@ -22,39 +22,35 @@ class Dashboard_Model extends CI_Model
 
 	public function jumlah_dipesan($role, $id)
 	{
-		// Ambil semua id_trans_denahs yang sudah DP atau Sold Out
-		$this->db->select('DISTINCT(id_trans_denahs) as id_trans_denahs');
-		$this->db->where_in('status_trans', ['DP', 'Sold Out']);
-		$subquery = $this->db->get('transaksi')->result_array();
-		$id_dilewati = array_column($subquery, 'id_trans_denahs');
-
-		// Jika tidak ada DP/Sold Out, isi array kosong agar tidak error
-		if (empty($id_dilewati)) {
-			$id_dilewati = [0];
-		}
-
 		if ($role == 'Admin') {
-			// Hitung hanya UTJ yang id_trans_denahs-nya belum ada di DP/Sold Out
-			$this->db->where('status_trans', 'UTJ');
-			$this->db->where_not_in('id_trans_denahs', $id_dilewati);
-			$this->db->from('transaksi');
-			return $this->db->count_all_results();
 
-		} else if ($role == 'Marketing') {
-			// Sama seperti Admin tapi join ke tabel marketing_perum
-			$this->db->select('COUNT(DISTINCT transaksi.id_trans_denahs) as jumlah_record');
-			$this->db->from('transaksi');
-			$this->db->join('denahs', 'denahs.id_denahs = transaksi.id_trans_denahs');
-			$this->db->join('perumahan', 'perumahan.id_perum = denahs.id_perum');
-			$this->db->join('marketing_perum', 'marketing_perum.id_perum_marketing = perumahan.id_perum');
-			$this->db->where('transaksi.status_trans', 'UTJ');
-			$this->db->where_not_in('transaksi.id_trans_denahs', $id_dilewati);
-			$this->db->where('marketing_perum.id_admin_marketing', $id);
+			$sql = "
+			SELECT COUNT(*) jumlah
+			FROM transaksi t
+			WHERE t.status_trans = 'UTJ'
+			AND t.id_trans = (
+				SELECT MAX(t2.id_trans)
+				FROM transaksi t2
+				WHERE t2.id_trans_denahs = t.id_trans_denahs
+			)
+			";
 
-			$query = $this->db->get();
-			$result = $query->row();
-			return $result ? $result->jumlah_record : 0;
+		} else {
+
+			$sql = "
+			SELECT COUNT(*) jumlah
+			FROM transaksi t
+			WHERE t.status_trans = 'UTJ'
+			AND t.id_marketing = '$id'
+			AND t.id_trans = (
+				SELECT MAX(t2.id_trans)
+				FROM transaksi t2
+				WHERE t2.id_trans_denahs = t.id_trans_denahs
+			)
+			";
 		}
+
+		return $this->db->query($sql)->row()->jumlah;
 	}
 
 	public function jumlah_sold($role, $id)
@@ -66,11 +62,8 @@ class Dashboard_Model extends CI_Model
 		} else if ($role == 'Marketing') {
 			$this->db->select('transaksi.status_trans, COUNT(*) as jumlah_record');
 			$this->db->from('transaksi');
-			$this->db->join('denahs', 'denahs.id_denahs = transaksi.id_trans_denahs');
-			$this->db->join('perumahan', 'perumahan.id_perum = denahs.id_perum');
-			$this->db->join('marketing_perum', 'marketing_perum.id_perum_marketing = perumahan.id_perum');
 			$this->db->where('transaksi.status_trans', 'Sold Out');
-			$this->db->where('marketing_perum.id_admin_marketing', $id);
+			$this->db->where('transaksi.id_marketing', $id);
 			return $this->db->count_all_results();
 		}
 	}
@@ -95,7 +88,7 @@ class Dashboard_Model extends CI_Model
 			$this->db->join('perumahan p', 'p.id_perum = d.id_perum');
 			$this->db->join('marketing_perum mp', 'mp.id_perum_marketing = p.id_perum');
 			$this->db->where('t.status_trans', 'DP');
-			$this->db->where('mp.id_admin_marketing', $id);
+			$this->db->where('t.id_marketing', $id);
 			$this->db->where('t.id_trans_denahs NOT IN (SELECT id_trans_denahs FROM transaksi WHERE status_trans = "Sold Out")', null, false);
 			$query = $this->db->get();
 			$result = $query->row();
@@ -146,7 +139,7 @@ class Dashboard_Model extends CI_Model
 			$this->db->join('perumahan p', 'p.id_perum = d.id_perum');
 			$this->db->join('marketing_perum mp', 'mp.id_perum_marketing = p.id_perum');
 			$this->db->where('t.status_trans', 'UTJ');
-			$this->db->where('mp.id_admin_marketing', $id);
+			$this->db->where('t.id_marketing', $id);
 			// Jangan hitung kalau id_trans_denahs sudah punya DP atau Sold Out
 			$this->db->where('t.id_trans_denahs NOT IN (SELECT id_trans_denahs FROM transaksi WHERE status_trans IN ("DP", "Sold Out"))', null, false);
 			$this->db->group_by('p.nama');
@@ -176,7 +169,7 @@ class Dashboard_Model extends CI_Model
 			$this->db->join('perumahan p', 'p.id_perum = d.id_perum');
 			$this->db->join('marketing_perum mp', 'mp.id_perum_marketing = p.id_perum');
 			$this->db->where('t.status_trans', 'DP');
-			$this->db->where('mp.id_admin_marketing', $id);
+			$this->db->where('t.id_marketing', $id);
 			// Jangan hitung jika sudah ada transaksi Sold Out
 			$this->db->where('t.id_trans_denahs NOT IN (SELECT id_trans_denahs FROM transaksi WHERE status_trans = "Sold Out")', null, false);
 			$this->db->group_by('p.nama');
@@ -200,9 +193,8 @@ class Dashboard_Model extends CI_Model
 			$this->db->from('transaksi');
 			$this->db->join('denahs', 'denahs.id_denahs = transaksi.id_trans_denahs');
 			$this->db->join('perumahan', 'perumahan.id_perum = denahs.id_perum');
-			$this->db->join('marketing_perum', 'marketing_perum.id_perum_marketing = perumahan.id_perum');
 			$this->db->where('transaksi.status_trans', 'Sold Out');
-			$this->db->where('marketing_perum.id_admin_marketing', $id);
+			$this->db->where('transaksi.id_marketing', $id);
 			$this->db->group_by('perumahan.nama');
 			return $this->db->get()->result();
 		}
@@ -339,10 +331,6 @@ class Dashboard_Model extends CI_Model
 			$this->db->join('perumahan', 'perumahan.id_perum = denahs.id_perum');
 			$this->db->group_by('perumahan.id_perum, bulan, transaksi.status_trans');
 			$this->db->where_in('transaksi.status_trans', [
-			'Lead',
-			'FU',
-			'Minat Survey',
-			'Sudah Survey',
 			'UTJ',
 			'DP',
 			'Sold Out'
@@ -405,30 +393,41 @@ class Dashboard_Model extends CI_Model
 
 		if ($role == 'Admin') {
 
-			$this->db->select("*");
-			$this->db->from('transaksi');
-			$this->db->join('denahs', 'denahs.id_denahs = transaksi.id_trans_denahs');
-			$this->db->join('perumahan', 'perumahan.id_perum = denahs.id_perum');
-			$this->db->where('transaksi.status_trans !=', 'Sold Out');
-			$this->db->order_by('perumahan.id_perum', 'ASC');
-			$this->db->order_by('transaksi.id_trans', 'DESC');
-			// $this->db->limit($limit, $start);
-			$query = $this->db->get();
-			return $query->result();
+			$sql = "
+			SELECT t.*, d.*, p.nama
+			FROM transaksi t
+			JOIN denahs d ON d.id_denahs = t.id_trans_denahs
+			JOIN perumahan p ON p.id_perum = d.id_perum
+			WHERE t.id_trans = (
+				SELECT MAX(t2.id_trans)
+				FROM transaksi t2
+				WHERE t2.id_trans_denahs = t.id_trans_denahs
+			)
+			AND t.status_trans != 'Sold Out'
+			ORDER BY p.id_perum ASC
+			";
 
-		} else if ($role == 'Marketing') {
-			$this->db->select("*");
-			$this->db->from('transaksi');
-			$this->db->join('denahs', 'denahs.id_denahs = transaksi.id_trans_denahs');
-			$this->db->join('perumahan', 'perumahan.id_perum = denahs.id_perum');
-			$this->db->join('marketing_perum', 'marketing_perum.id_perum_marketing = perumahan.id_perum');
-			$this->db->where('marketing_perum.id_admin_marketing', $id);
-			$this->db->where('transaksi.status_trans !=', 'Sold Out');
-			$this->db->order_by('perumahan.id_perum', 'ASC');
+			return $this->db->query($sql)->result();
 
-			// $this->db->limit($limit, $start);
-			$query = $this->db->get();
-			return $query->result();
+		}
+		else if ($role == 'Marketing') {
+
+			$sql = "
+			SELECT t.*, d.*, p.nama
+			FROM transaksi t
+			JOIN denahs d ON d.id_denahs = t.id_trans_denahs
+			JOIN perumahan p ON p.id_perum = d.id_perum
+			WHERE t.id_marketing = '$id'
+			AND t.id_trans = (
+				SELECT MAX(t2.id_trans)
+				FROM transaksi t2
+				WHERE t2.id_trans_denahs = t.id_trans_denahs
+			)
+			AND t.status_trans != 'Sold Out'
+			ORDER BY p.id_perum ASC
+			";
+
+			return $this->db->query($sql)->result();
 		}
 	}
 }

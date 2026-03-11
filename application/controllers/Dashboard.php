@@ -35,14 +35,17 @@ class Dashboard extends AUTH_Controller
         $data['perumahan']          = $this->M_admin->m_perumahan($id, $role);
         $data['area_siteplan']      = $this->M_admin->m_area_siteplan();
         $data['bread']              = 'Dashboard';
+
         $data['jum_ready']          = $this->Dashboard_Model->jumlah_ready($role, $id);
         $data['jum_dipesan']        = $this->Dashboard_Model->jumlah_dipesan($role, $id);
         $data['jum_sold']           = $this->Dashboard_Model->jumlah_sold($role, $id);
         $data['jum_null']           = $this->Dashboard_Model->all_DP($role, $id);
+
         $data['tolp_ready']         = $this->Dashboard_Model->tooltip_ready($role, $id);
         $data['tolp_UTJ']           = $this->Dashboard_Model->tooltip_UTJ($role, $id);
         $data['tolp_DP']            = $this->Dashboard_Model->tooltip_DP($role, $id);
         $data['tolp_Sold']          = $this->Dashboard_Model->tooltip_sold($role, $id);
+
         $data['content']            = 'page/Dashboard_v';
         $data['script']             = 'page/dashboard/dashboard_js';
         $data['ambil']              = $this->userdata;
